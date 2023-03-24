@@ -18,9 +18,8 @@
         .container {
             display: flex;
             justify-content: space-between;
-            border-right: 2px solid black;
-            height: 90%;
-            width: 90%;
+            height: 100%;
+            width: 100%;
         }
         .deck {
             display: flex;
@@ -57,11 +56,6 @@
             cursor: grabbing;
             opacity: 0.5;
         }
-        .check-btn {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-        }
         .placeholder {
             display: flex;
             align-items: center;
@@ -76,9 +70,14 @@
         .theme-toggle {
             position: fixed;
             top: 10px;
-            right: 10px;
+            left: 10px;
             font-size: 24px;
             cursor: pointer;
+        }
+        .check-btn {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
         }
     </style>
 </head>
@@ -145,21 +144,22 @@
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
-                draggedCard = card;
+                draggedCard = card.cloneNode(true);
                 card.classList.add('dragged');
-                card.style.position = 'absolute';
+                card.parentNode.appendChild(draggedCard);
+                draggedCard.style.position = 'absolute';
 
                 // Store initial position for the card
-                card.initialX = e.clientX - card.getBoundingClientRect().left;
-                card.initialY = e.clientY - card.getBoundingClientRect().top;
+                draggedCard.initialX = e.clientX - card.getBoundingClientRect().left;
+                draggedCard.initialY = e.clientY - card.getBoundingClientRect().top;
             });
 
             card.addEventListener('mouseup', (e) => {
                 e.preventDefault();
                 card.classList.remove('dragged');
-                draggedCard.style.position = '';
-                draggedCard.style.left = '';
-                draggedCard.style.top = '';
+                if (draggedCard) {
+                    draggedCard.remove();
+                }
                 draggedCard = null;
             });
 
@@ -200,8 +200,6 @@
             });
         }
 
-
-
         function checkResults() {
             Array.from(cardArea.children)
                 .filter(child => child.classList.contains('card'))
@@ -216,38 +214,5 @@
             document.body.style.backgroundColor = isDarkMode ? '#2c3e50' : 'white';
             document.body.style.color = isDarkMode ? 'white' : 'black';
             deck.style.backgroundColor = isDarkMode ? '#34495e' : '#cccccc';
-            cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
-            themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
-        }
-
-        cardDeck = shuffle(cardDeck);
-        drawCard();
-
-        skipBtn.addEventListener('click', () => {
-            const topCardData = {
-                name: topCard.textContent,
-                date: topCard.dataset.date
-            };
-            cardDeck.push(topCardData);
-            cardDeck = shuffle(cardDeck);
-            drawCard();
-            hasInteracted = true;
-        });
-
-        checkBtn.addEventListener('click', () => {
-            checkResults();
-        });
-
-        themeToggle.addEventListener('click', () => {
-            toggleDarkMode();
-        });
-
-        window.addEventListener('beforeunload', (e) => {
-            if (hasInteracted) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-    </script>
-</body>
-</html>
+            cardArea.style.backgroundColor = isDarkMode ?
+----need to continue after cap expires
