@@ -11,10 +11,26 @@
             flex-direction: column;
             align-items: center;
         }
+        #deck {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 150px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
         #card-container {
             display: flex;
+            flex-direction: column;
             gap: 10px;
-            margin-bottom: 20px;
+            overflow-y: auto;
+            max-height: 500px;
+            width: 200px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
         }
         .card {
             background-color: #f0f0f0;
@@ -45,6 +61,8 @@
         .placeholder.show {
             display: block;
             width: 150px;
+            height: 50px;
+            margin-bottom: 10px;
         }
         .placeholder::before {
             content: '+';
@@ -60,8 +78,8 @@
 </head>
 <body>
     <h1>AP History Card Sorting Game</h1>
+    <div id="deck">Click to draw a card</div>
     <div id="card-container"></div>
-    <p>Moves: <span id="move-counter">0</span></p>
     <button id="check-results" disabled>Check Results</button>
     <div class="card placeholder"></div>
 
@@ -74,36 +92,39 @@
             { "name": "Event E", "date": "1980" }
         ];
 
+        const deck = document.getElementById("deck");
         const cardContainer = document.getElementById("card-container");
         const checkResultsBtn = document.getElementById("check-results");
-        const moveCounter = document.getElementById("move-counter");
         const placeholder = document.querySelector(".placeholder");
         let moves = 0;
         let draggedCard = null;
         let currentIndex = -1;
 
-        function displayCards() {
-            flashcards.forEach((flashcard, index) => {
-                const card = document.createElement("div");
-                card.className = "card";
-                card.textContent = flashcard.name;
-                card.dataset.index = index;
-                card.draggable = true;
-                cardContainer.appendChild(card);
-            });
-
-            checkResultsBtn.disabled = false;
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
         }
 
-        function updateCardIndices() {
-            Array.from(cardContainer.children).forEach((card, index) => {
-                card.dataset.index = index;
-            });
+        function drawCard() {
+            const cardData = flashcards.shift();
+
+            if (cardData) {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.textContent = cardData.name;
+                card.draggable = true;
+                cardContainer.appendChild(card);
+                checkResultsBtn.disabled = false;
+            } else {
+                deck.removeEventListener("click", drawCard);
+                deck.style.cursor = "default";
+            }
         }
 
         function checkResults() {
             let previousDate = null;
-
             Array.from(cardContainer.children).forEach((card, index) => {
                 card.classList.remove("correct", "incorrect");
 
@@ -118,12 +139,13 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            displayCards();
+            shuffle(flashcards);
+            deck.addEventListener("click", drawCard);
         });
 
         cardContainer.addEventListener("dragstart", (event) => {
             draggedCard = event.target;
-            currentIndex = parseInt(draggedCard.dataset.index);
+            currentIndex = Array.from(cardContainer.children).indexOf(draggedCard);
             draggedCard.classList.add("dragged");
             setTimeout(() => {
                 placeholder.style.height = `${draggedCard.offsetHeight}px`;
@@ -136,7 +158,7 @@
             const targetCard = event.target.closest(".card");
 
             if (targetCard) {
-                const targetIndex = parseInt(targetCard.dataset.index);
+                const targetIndex = Array.from(cardContainer.children).indexOf(targetCard);
 
                 if (currentIndex < targetIndex) {
                     cardContainer.insertBefore(placeholder, targetCard.nextElementSibling);
@@ -169,9 +191,7 @@
                 placeholder.style.height = "0";
             }, 300);
 
-            updateCardIndices();
             moves++;
-            moveCounter.textContent = moves;
         });
 
         document.addEventListener("mouseup", (event) => {
@@ -183,19 +203,18 @@
                 setTimeout(() => {
                     placeholder.style.height = "0";
                 }, 300);
-
                 draggedCard = null;
                 currentIndex = -1;
             }
         });
-        
+
         checkResultsBtn.addEventListener("click", () => {
             flashcards = Array.from(cardContainer.children).map((card, index) => {
-                return { "name": card.textContent, "date": flashcards[parseInt(card.dataset.index)].date };
-            });
+                return { "name": card.textContent, "date": flashcards[index].date };
+});
+checkResults();
+});
+</script>
 
-            checkResults();
-        });
-    </script>
 </body>
 </html>
