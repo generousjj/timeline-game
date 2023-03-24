@@ -24,9 +24,26 @@
             cursor: move;
             width: 150px;
             text-align: center;
+            transition: background-color 0.5s;
         }
-        #results {
+        .correct {
+            background-color: rgba(0, 255, 0, 0.2);
+        }
+        .incorrect {
+            background-color: rgba(255, 0, 0, 0.2);
+        }
+        .dragged {
+            opacity: 0.5;
+        }
+        .placeholder {
             display: none;
+            background-color: rgba(0, 0, 255, 0.2);
+            width: 0;
+            transition: width 0.3s;
+        }
+        .placeholder.show {
+            display: block;
+            width: 150px;
         }
     </style>
 </head>
@@ -35,7 +52,7 @@
     <div id="card-container"></div>
     <p>Moves: <span id="move-counter">0</span></p>
     <button id="check-results" disabled>Check Results</button>
-    <div id="results"></div>
+    <div class="card placeholder"></div>
 
     <script>
         let flashcards = [
@@ -48,9 +65,11 @@
 
         const cardContainer = document.getElementById("card-container");
         const checkResultsBtn = document.getElementById("check-results");
-        const resultsDiv = document.getElementById("results");
         const moveCounter = document.getElementById("move-counter");
+        const placeholder = document.querySelector(".placeholder");
         let moves = 0;
+        let draggedCard = null;
+        let currentIndex = -1;
 
         function displayCards() {
             flashcards.forEach((flashcard, index) => {
@@ -72,21 +91,19 @@
         }
 
         function checkResults() {
-            let sorted = true;
+            let previousDate = null;
 
-            for (let i = 1; i < flashcards.length; i++) {
-                if (flashcards[i - 1].date > flashcards[i].date) {
-                    sorted = false;
-                    break;
+            Array.from(cardContainer.children).forEach((card, index) => {
+                card.classList.remove("correct", "incorrect");
+
+                if (previousDate === null || flashcards[index].date >= previousDate) {
+                    card.classList.add("correct");
+                    previousDate = flashcards[index].date;
+                } else {
+                    card.classList.add("incorrect");
+                    previousDate = flashcards[index].date;
                 }
-            }
-
-            const message = sorted
-                ? "Congratulations! The cards are in the correct order!"
-                : "The cards are not in the correct order. Keep trying!";
-
-            resultsDiv.style.display = "block";
-            resultsDiv.textContent = message;
+            });
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -94,37 +111,57 @@
         });
 
         cardContainer.addEventListener("dragstart", (event) => {
-            event.dataTransfer.setData("text/plain", event.target.dataset.index);
-            event.dataTransfer.effectAllowed = "move";
+            draggedCard = event.target;
+            currentIndex = parseInt(draggedCard.dataset.index);
+            draggedCard.classList.add("dragged");
+            setTimeout(() => {
+                placeholder.style.height = `${draggedCard.offsetHeight}px`;
+                draggedCard.style.display = "none";
+            }, 0);
         });
 
         cardContainer.addEventListener("dragover", (event) => {
             event.preventDefault();
-            event.dataTransfer.dropEffect = "move";
+            const targetCard = event.target.closest(".card");
+
+            if (targetCard) {
+                const targetIndex = parseInt(targetCard.dataset.index);
+
+                if (currentIndex < targetIndex) {
+                    cardContainer.insertBefore(placeholder, targetCard.nextElementSibling);
+                } else {
+                    cardContainer.insertBefore(placeholder, targetCard);
+                }
+            }
+        });
+
+        cardContainer.addEventListener("dragleave", (event) => {
+            event.preventDefault();
         });
 
         cardContainer.addEventListener("drop", (event) => {
             event.preventDefault();
-            const draggedIndex = parseInt(event.dataTransfer.getData("text/plain"));
-            const droppedIndex = parseInt(event.target.dataset.index);
+            placeholder.classList.remove("show");
+            cardContainer.insertBefore(draggedCard, placeholder);
+            draggedCard.style.display = "block";
+            draggedCard.classList.remove("dragged");
+            setTimeout(() => {
+                placeholder.style.height = "0";
+            }, 300);
 
-            if (draggedIndex !== droppedIndex) {
-                const draggedCard = cardContainer.children[draggedIndex];
-                const droppedCard = cardContainer.children[droppedIndex];
+            updateCardIndices();
+            moves++;
+            moveCounter.textContent = moves;
+        });
 
-                cardContainer.insertBefore(draggedCard, droppedCard.nextElementSibling);
-                cardContainer.insertBefore(droppedCard, draggedCard);
-
-                updateCardIndices();
-                moves++;
-                moveCounter.textContent = moves;
-            }
+        cardContainer.addEventListener("dragend", () => {
+            draggedCard = null;
+            currentIndex = -1;
         });
 
         checkResultsBtn.addEventListener("click", () => {
-            flashcards.forEach((flashcard, index) => {
-                const card = cardContainer.children[index];
-                card.textContent = flashcard.date;
+            flashcards = Array.from(cardContainer.children).map((card, index) => {
+                return { "name": card.textContent, "date": flashcards[index].date };
             });
 
             checkResults();
