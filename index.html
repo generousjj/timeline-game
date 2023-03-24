@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP History Card Sorting Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #card-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: move;
+            width: 150px;
+            text-align: center;
+        }
+        #results {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>AP History Card Sorting Game</h1>
+    <div id="card-container"></div>
+    <p>Moves: <span id="move-counter">0</span></p>
+    <button id="check-results" disabled>Check Results</button>
+    <div id="results"></div>
+
+    <script>
+        async function fetchFlashcards() {
+            const response = await fetch("flashcards.json");
+            const flashcards = await response.json();
+            return flashcards;
+        }
+
+        function createCardElement(flashcard, index) {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.textContent = flashcard.name;
+            card.dataset.index = index;
+            card.draggable = true;
+            return card;
+        }
+
+        function updateCardIndices() {
+            Array.from(cardContainer.children).forEach((card, index) => {
+                card.dataset.index = index;
+            });
+        }
+
+        function displayCards(flashcards) {
+            flashcards.forEach((flashcard, index) => {
+                const card = createCardElement(flashcard, index);
+                cardContainer.appendChild(card);
+            });
+
+            checkResultsBtn.disabled = false;
+        }
+
+        function checkResults() {
+            let sorted = true;
+
+            for (let i = 1; i < flashcards.length; i++) {
+                if (flashcards[i - 1].date > flashcards[i].date) {
+                    sorted = false;
+                    break;
+                }
+            }
+
+            const message = sorted
+                ? "Congratulations! The cards are in the correct order!"
+                : "The cards are not in the correct order. Keep trying!";
+
+            resultsDiv.style.display = "block";
+            resultsDiv.textContent = message;
+        }
+
+        const cardContainer = document.getElementById("card-container");
+        const checkResultsBtn = document.getElementById("check-results");
+        const resultsDiv = document.getElementById("results");
+        const moveCounter = document.getElementById("move-counter");
+        let flashcards;
+        let moves = 0;
+
+        fetchFlashcards().then((cards) => {
+            flashcards = cards;
+            displayCards(flashcards);
+        });
+
+        cardContainer.addEventListener("dragstart", (event) => {
+            event.dataTransfer.setData("text/plain", event.target.dataset
+    cardContainer.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+    });
+
+    cardContainer.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const draggedIndex = parseInt(event.dataTransfer.getData("text/plain"));
+        const droppedIndex = parseInt(event.target.dataset.index);
+
+        if (draggedIndex !== droppedIndex) {
+            const draggedCard = cardContainer.children[draggedIndex];
+            const droppedCard = cardContainer.children[droppedIndex];
+
+            cardContainer.insertBefore(draggedCard, droppedCard.nextElementSibling);
+            cardContainer.insertBefore(droppedCard, draggedCard);
+
+            updateCardIndices();
+            moves++;
+            moveCounter.textContent = moves;
+        }
+    });
+
+    checkResultsBtn.addEventListener("click", () => {
+        flashcards.forEach((flashcard, index) => {
+            const card = cardContainer.children[index];
+            card.textContent = flashcard.date;
+        });
+
+        checkResults();
+    });
+</script>
+</body>
+</html>
