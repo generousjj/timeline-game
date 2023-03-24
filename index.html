@@ -215,4 +215,37 @@
             document.body.style.color = isDarkMode ? 'white' : 'black';
             deck.style.backgroundColor = isDarkMode ? '#34495e' : '#cccccc';
             cardArea.style.backgroundColor = isDarkMode ?
-----need to continue after cap expires
+                cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
+                themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+            }
+
+            cardDeck = shuffle(cardDeck);
+            drawCard();
+
+            skipBtn.addEventListener('click', () => {
+                const topCardData = {
+                    name: topCard.textContent,
+                    date: topCard.dataset.date
+                };
+                cardDeck.push(topCardData);
+                drawCard();
+                hasInteracted = true;
+            });
+
+            checkBtn.addEventListener('click', () => {
+                checkResults();
+            });
+
+            themeToggle.addEventListener('click', () => {
+                toggleDarkMode();
+            });
+
+            window.addEventListener('beforeunload', (e) => {
+                if (hasInteracted) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        </script>
+    </body>
+</html>
