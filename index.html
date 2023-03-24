@@ -145,19 +145,18 @@
                 checkResults();
                 return;
             }
-
+        
             const cardData = cardDeck.shift();
-            topCard.textContent = cardData.name;
-            topCard.dataset.date = cardData.date;
+            const newCard = document.createElement('div');
+            newCard.textContent = cardData.name;
+            newCard.dataset.date = cardData.date;
 
-            topCard.style.visibility = 'visible';
+            newCard.style.visibility = 'visible';
 
-            topCard.classList.add('card');
+            newCard.classList.add('card');
 
-            
-
-            setupCardEvents(topCard);
-            deck.appendChild(topCard);
+            setupCardEvents(newCard);
+            deck.appendChild(newCard);
         }
 
         function setupCardEvents(card) {
@@ -169,73 +168,76 @@
                     setupCardEvents(draggedCard);
                     cardArea.appendChild(draggedCard);
                     card.style.visibility = 'hidden';
-                    placeholder.style.display = 'none'; // Hide the placeholder
+                    placeholder.style.display = 'none';
 
                     draggedCard.classList.add('dragged');
                     draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
                     draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
                 }
             });
 
-            card.addEventListener('mouseup', (e) => {
-                e.preventDefault();
-                
-                if (card.parentNode === deck) {
-                    return;
-                }
-
-                if (draggedCard) {
-                    cardArea.removeChild(draggedCard);
-                    const newIndex = Array.from(cardArea.children).indexOf(placeholder);
-                    cardArea.insertBefore(draggedCard, newIndex === -1 ? null : cardArea.children[newIndex]);
-
-                    draggedCard.style.position = '';
-                    draggedCard.style.left = '';
-                    draggedCard.style.top = '';
-                    draggedCard.classList.remove('dragged');
-
-                    if (card.parentNode === deck) {
-                        drawCard();
-                    }
-                }
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                e.preventDefault();
-                if (!draggedCard) {
-                    return;
-                }
-
-                draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
-                draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
-
-                const cardAreaRect = cardArea.getBoundingClientRect();
-                const cardRect = draggedCard.getBoundingClientRect();
-                const y = e.clientY;
-
-                if (y < cardAreaRect.top || y > cardAreaRect.bottom) {
-                    return;
-                }
-
-                const closestCard = Array.from(cardArea.children)
-                    .filter(child => child !== draggedCard && child !== placeholder)
-                    .reduce((closest, child) => {
-                        const childRect = child.getBoundingClientRect();
-                        const offset = y - childRect.top - childRect.height / 2;
-
-                        if (offset < 0 && offset > closest.offset) {
-                            return { offset, element: child };
-                        } else {
-                            return closest;
-                        }
-                    }, { offset: Number.NEGATIVE_INFINITY });
-
-                if (placeholder.nextSibling !== closestCard.element) {
-                    cardArea.insertBefore(placeholder, closestCard.element);
-                }
-           
-            });
         }
+
+        function onMouseMove(e) {
+            e.preventDefault();
+            if (!draggedCard) {
+                return;
+            }
+
+            draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
+            draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
+
+            const cardAreaRect = cardArea.getBoundingClientRect();
+            const cardRect = draggedCard.getBoundingClientRect();
+            const y = e.clientY;
+
+            if (y < cardAreaRect.top || y > cardAreaRect.bottom) {
+                return;
+            }
+
+            const closestCard = Array.from(cardArea.children)
+                .filter(child => child !== draggedCard && child !== placeholder)
+                .reduce((closest, child) => {
+                    const childRect = child.getBoundingClientRect();
+                    const offset = y - childRect.top - childRect.height / 2;
+
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY });
+
+            if (placeholder.nextSibling !== closestCard.element) {
+                cardArea.insertBefore(placeholder, closestCard.element);
+            }
+        }
+
+        function onMouseUp(e) {
+            e.preventDefault();
+
+            if (draggedCard) {
+                cardArea.removeChild(draggedCard);
+                const newIndex = Array.from(cardArea.children).indexOf(placeholder);
+                cardArea.insertBefore(draggedCard, newIndex === -1 ? null : cardArea.children[newIndex]);
+
+                draggedCard.style.position = '';
+                draggedCard.style.left = '';
+                draggedCard.style.top = '';
+                draggedCard.classList.remove('dragged');
+
+                if (draggedCard.parentNode === deck) {
+                    drawCard();
+                }
+
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+        }
+
         
         function checkResults() {
             let prevDate = null;
