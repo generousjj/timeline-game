@@ -92,7 +92,7 @@
     <div class="container">
         <div class="deck">
             <div class="card top-card"></div>
-            <button class="skip-btn">Skip</button>
+            <button class="skip-btn">Next</button>
         </div>
         <div class="card-area">
             <div class="card-container">
@@ -157,29 +157,36 @@
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
-                if (card.parentNode === deck) { // Check if the card is in the deck
-                    draggedCard = card.cloneNode(true); // Clone the card
-                    setupCardEvents(draggedCard); // Add event listeners to the cloned card
-                    cardArea.appendChild(draggedCard); // Append the clone to the card area
-                    card.style.visibility = 'hidden'; // Hide the original card in the deck
-                } else {
-                    draggedCard = card;
+                if (card.parentNode === deck) {
+                    clickTimeout = setTimeout(() => {
+                        // Long press: Drag the card
+                        draggedCard = card.cloneNode(true);
+                        setupCardEvents(draggedCard);
+                        cardArea.appendChild(draggedCard);
+                        card.style.visibility = 'hidden';
+                    }, 500);
                 }
-                card.classList.add('dragged');
-
-                draggedCard.initialX = e.clientX - draggedCard.getBoundingClientRect().left;
-                draggedCard.initialY = e.clientY - draggedCard.getBoundingClientRect().top;
-                placeholder.style.display = 'none';
             });
 
-            document.addEventListener('mouseup', (e) => {
+            card.addEventListener('mouseup', (e) => {
                 e.preventDefault();
-                card.classList.remove('dragged');
-                if (draggedCard) {
-                    if (draggedCard.parentNode === deck) { // Remove the card from the deck if it was dragged from the deck
-                        drawCard();
+                if (clickTimeout) {
+                    clearTimeout(clickTimeout);
+                    clickTimeout = null;
+                }
+                
+                if (card.parentNode === deck) {
+                    // Short click: Teleport the card
+                    draggedCard = card.cloneNode(true);
+                    setupCardEvents(draggedCard);
+                    cardArea.insertBefore(draggedCard, placeholder);
+                    card.style.visibility = 'hidden';
+                    drawCard();
+                } else {
+                    card.classList.remove('dragged');
+                    if (draggedCard) {
+                        draggedCard = null;
                     }
-                    draggedCard = null;
                 }
             });
 
@@ -286,6 +293,9 @@
                 e.returnValue = '';
             }
         });
+        
+        cardDeck = shuffle(cardDeck);
+        drawCard();
     </script>
 </body>
 </html>
