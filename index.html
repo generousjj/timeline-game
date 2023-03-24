@@ -148,8 +148,17 @@
             topCard.textContent = cardData.name;
             topCard.dataset.date = cardData.date;
 
-            // MODIFIED: Reset the top card's visibility when drawing a new card
+            // Reset the top card's visibility when drawing a new card
             topCard.style.visibility = 'visible';
+
+            topCard.initialX = 0;
+            topCard.initialY = 0;
+
+            // Add the 'card' class to the topCard
+            topCard.classList.add('card');
+
+            // Append the top card to the deck
+            deck.appendChild(topCard);
 
             setupCardEvents(topCard);
         }
@@ -265,9 +274,6 @@
             cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
             themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
         }
-
-        cardDeck = shuffle(cardDeck);
-        drawCard();
 
         skipBtn.addEventListener('click', () => {
             const topCardData = {
