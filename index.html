@@ -141,12 +141,14 @@
 
             setupCardEvents(topCard);
         }
-
+        
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 draggedCard = card;
                 card.classList.add('dragged');
+                card.style.position = 'absolute';
+
                 // Store initial position for the card
                 card.initialX = e.clientX - card.getBoundingClientRect().left;
                 card.initialY = e.clientY - card.getBoundingClientRect().top;
@@ -155,10 +157,13 @@
             card.addEventListener('mouseup', (e) => {
                 e.preventDefault();
                 card.classList.remove('dragged');
+                draggedCard.style.position = '';
+                draggedCard.style.left = '';
+                draggedCard.style.top = '';
                 draggedCard = null;
             });
 
-            cardArea.addEventListener('mousemove', (e) => {
+            document.addEventListener('mousemove', (e) => {
                 e.preventDefault();
                 if (!draggedCard) {
                     return;
@@ -167,7 +172,6 @@
                 // Update the position of the dragged card
                 draggedCard.style.left = `${e.clientX - draggedCard.initialX}px`;
                 draggedCard.style.top = `${e.clientY - draggedCard.initialY}px`;
-                draggedCard.style.position = 'absolute';
 
                 const cardAreaRect = cardArea.getBoundingClientRect();
                 const cardRect = draggedCard.getBoundingClientRect();
@@ -195,6 +199,7 @@
                 }
             });
         }
+
 
 
         function checkResults() {
