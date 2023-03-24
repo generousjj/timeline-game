@@ -40,10 +40,21 @@
             background-color: rgba(0, 0, 255, 0.2);
             width: 0;
             transition: width 0.3s;
+            position: relative;
         }
         .placeholder.show {
             display: block;
             width: 150px;
+        }
+        .placeholder::before {
+            content: '+';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
         }
     </style>
 </head>
@@ -132,11 +143,13 @@
                 } else {
                     cardContainer.insertBefore(placeholder, targetCard);
                 }
+                placeholder.classList.add("show");
             }
         });
 
         cardContainer.addEventListener("dragleave", (event) => {
             event.preventDefault();
+            placeholder.classList.remove("show");
         });
 
         cardContainer.addEventListener("drop", (event) => {
@@ -161,7 +174,7 @@
 
         checkResultsBtn.addEventListener("click", () => {
             flashcards = Array.from(cardContainer.children).map((card, index) => {
-                return { "name": card.textContent, "date": flashcards[index].date };
+                return { "name": card.textContent, "date": flashcards[parseInt(card.dataset.index)].date };
             });
 
             checkResults();
