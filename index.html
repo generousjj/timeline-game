@@ -149,7 +149,14 @@
 
         cardContainer.addEventListener("dragleave", (event) => {
             event.preventDefault();
-            placeholder.classList.remove("show");
+            const targetCard = event.target.closest(".card");
+            if (targetCard) {
+                setTimeout(() => {
+                    if (!cardContainer.contains(document.elementFromPoint(event.clientX, event.clientY))) {
+                        placeholder.classList.remove("show");
+                    }
+                }, 50);
+            }
         });
 
         cardContainer.addEventListener("drop", (event) => {
@@ -165,11 +172,6 @@
             updateCardIndices();
             moves++;
             moveCounter.textContent = moves;
-        });
-
-        cardContainer.addEventListener("dragend", () => {
-            draggedCard = null;
-            currentIndex = -1;
         });
 
         checkResultsBtn.addEventListener("click", () => {
