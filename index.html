@@ -45,6 +45,12 @@
             overflow-y: auto;
             background-color: white;
         }
+        .card-container { /* New class for the vertical container */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
         .card {
             padding: 10px 20px;
             margin: 10px;
@@ -88,6 +94,9 @@
             <button class="skip-btn">Skip</button>
         </div>
         <div class="card-area">
+            <div class="card-container">
+            <!-- New container for cards -->
+            </div>
             <div class="placeholder">Drag cards from the left to play!</div>
         </div>
     </div>
@@ -144,26 +153,19 @@
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
-                draggedCard = card.cloneNode(true);
+                draggedCard = card; // Use the actual card instead of a cloned one
                 card.classList.add('dragged');
-                card.parentNode.appendChild(draggedCard);
-                draggedCard.style.position = 'absolute';
-
-                // Store initial position for the card
-                draggedCard.initialX = e.clientX - card.getBoundingClientRect().left;
-                draggedCard.initialY = e.clientY - card.getBoundingClientRect().top;
             });
 
             document.addEventListener('mouseup', (e) => {
                 e.preventDefault();
                 card.classList.remove('dragged');
                 if (draggedCard) {
-                    const cardElement = draggedCard.cloneNode(true);
-                    setupCardEvents(cardElement);
-                    cardArea.insertBefore(cardElement, placeholder);
-                    draggedCard.remove();
+                    if (draggedCard.parentNode === deck) { // Remove the card from the deck if it was dragged from the deck
+                        drawCard();
+                    }
+                    draggedCard = null;
                 }
-                draggedCard = null;
             });
 
             document.addEventListener('mousemove', (e) => {
@@ -204,11 +206,28 @@
         }
 
         function checkResults() {
-            Array.from(cardArea.children)
+            Array.from(cardContainer.children) // Use 'cardContainer' instead of 'cardArea'
                 .filter(child => child.classList.contains('card'))
                 .forEach((card, index, cards) => {
                     const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
                     card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
+                    
+                    // Display event date and text when the Check Results button is clicked
+                    if (!card.querySelector('.event-date')) {
+                        const eventDate = document.createElement('div');
+                        eventDate.classList.add('event-date');
+                        eventDate.textContent = card.dataset.date;
+                        card.prepend(eventDate);
+
+                        const eventText = document.createElement('div');
+                        eventText.classList.add('event-text');
+                        eventText.style.fontStyle = 'italic';
+                        eventText.style.fontSize = 'smaller';
+                        eventText.textContent = card.textContent;
+                        card.appendChild(eventText);
+
+                        card.textContent = '';
+                    }
                 });
         }
 
