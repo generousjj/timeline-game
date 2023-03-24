@@ -148,6 +148,9 @@
             topCard.textContent = cardData.name;
             topCard.dataset.date = cardData.date;
 
+            // MODIFIED: Reset the top card's visibility when drawing a new card
+            topCard.style.visibility = 'visible';
+
             setupCardEvents(topCard);
         }
 
@@ -156,12 +159,14 @@
                 e.preventDefault();
                 if (card.parentNode === deck) { // Check if the card is in the deck
                     draggedCard = card.cloneNode(true); // Clone the card
+                    setupCardEvents(draggedCard); // Add event listeners to the cloned card
                     cardArea.appendChild(draggedCard); // Append the clone to the card area
+                    card.style.visibility = 'hidden'; // Hide the original card in the deck
                 } else {
                     draggedCard = card;
                 }
                 card.classList.add('dragged');
-                
+
                 draggedCard.initialX = e.clientX - draggedCard.getBoundingClientRect().left;
                 draggedCard.initialY = e.clientY - draggedCard.getBoundingClientRect().top;
                 placeholder.style.display = 'none';
