@@ -174,6 +174,21 @@
             moveCounter.textContent = moves;
         });
 
+        document.addEventListener("mouseup", (event) => {
+            if (draggedCard && !cardContainer.contains(document.elementFromPoint(event.clientX, event.clientY))) {
+                placeholder.classList.remove("show");
+                cardContainer.insertBefore(draggedCard, placeholder);
+                draggedCard.style.display = "block";
+                draggedCard.classList.remove("dragged");
+                setTimeout(() => {
+                    placeholder.style.height = "0";
+                }, 300);
+
+                draggedCard = null;
+                currentIndex = -1;
+            }
+        });
+        
         checkResultsBtn.addEventListener("click", () => {
             flashcards = Array.from(cardContainer.children).map((card, index) => {
                 return { "name": card.textContent, "date": flashcards[parseInt(card.dataset.index)].date };
