@@ -154,7 +154,7 @@
                 draggedCard.initialY = e.clientY - card.getBoundingClientRect().top;
             });
 
-            card.addEventListener('mouseup', (e) => {
+            document.addEventListener('mouseup', (e) => {
                 e.preventDefault();
                 card.classList.remove('dragged');
                 if (draggedCard) {
