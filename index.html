@@ -38,43 +38,37 @@
     <div id="results"></div>
 
     <script>
-        let flashcards;
-        
-        function fetchFlashcards() {
-            return new Promise((resolve) => {
-                const flashcards = [
-                    { "name": "Event A", "date": "1900" },
-                    { "name": "Event B", "date": "1920" },
-                    { "name": "Event C", "date": "1940" },
-                    { "name": "Event D", "date": "1960" },
-                    { "name": "Event E", "date": "1980" }
-                ];
-                resolve(flashcards);
-            });
-        }
+        let flashcards = [
+            { "name": "Event A", "date": "1900" },
+            { "name": "Event B", "date": "1920" },
+            { "name": "Event C", "date": "1940" },
+            { "name": "Event D", "date": "1960" },
+            { "name": "Event E", "date": "1980" }
+        ];
 
-        function createCardElement(flashcard, index) {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.textContent = flashcard.name;
-            card.dataset.index = index;
-            card.draggable = true;
-            return card;
+        const cardContainer = document.getElementById("card-container");
+        const checkResultsBtn = document.getElementById("check-results");
+        const resultsDiv = document.getElementById("results");
+        const moveCounter = document.getElementById("move-counter");
+        let moves = 0;
+
+        function displayCards() {
+            flashcards.forEach((flashcard, index) => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.textContent = flashcard.name;
+                card.dataset.index = index;
+                card.draggable = true;
+                cardContainer.appendChild(card);
+            });
+
+            checkResultsBtn.disabled = false;
         }
 
         function updateCardIndices() {
             Array.from(cardContainer.children).forEach((card, index) => {
                 card.dataset.index = index;
             });
-        }
-
-        function displayCards(flashcards) {
-            flashcards.forEach((flashcard, index) => {
-                const card = createCardElement(flashcard, index);
-                cardContainer.appendChild(card);
-            });
-
-            checkResultsBtn.disabled = false;
         }
 
         function checkResults() {
@@ -95,59 +89,46 @@
             resultsDiv.textContent = message;
         }
 
-        const cardContainer = document.getElementById("card-container");
-        const checkResultsBtn = document.getElementById("check-results");
-        const resultsDiv = document.getElementById("results");
-        const moveCounter = document.getElementById("move-counter");
-        let flashcards;
-        let moves = 0;
-
-        fetchFlashcards().then((cards) => {
-            flashcards = cards;
-            displayCards(flashcards);
+        document.addEventListener("DOMContentLoaded", () => {
+            displayCards();
         });
 
         cardContainer.addEventListener("dragstart", (event) => {
-            event.dataTransfer.setData("text/plain", event.target.dataset
-    cardContainer.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-    });
-
-    cardContainer.addEventListener("drop", (event) => {
-        event.preventDefault();
-        const draggedIndex = parseInt(event.dataTransfer.getData("text/plain"));
-        const droppedIndex = parseInt(event.target.dataset.index);
-
-        if (draggedIndex !== droppedIndex) {
-            const draggedCard = cardContainer.children[draggedIndex];
-            const droppedCard = cardContainer.children[droppedIndex];
-
-            cardContainer.insertBefore(draggedCard, droppedCard.nextElementSibling);
-            cardContainer.insertBefore(droppedCard, draggedCard);
-
-            updateCardIndices();
-            moves++;
-            moveCounter.textContent = moves;
-        }
-    });
-
-    checkResultsBtn.addEventListener("click", () => {
-        flashcards.forEach((flashcard, index) => {
-            const card = cardContainer.children[index];
-            card.textContent = flashcard.date;
+            event.dataTransfer.setData("text/plain", event.target.dataset.index);
+            event.dataTransfer.effectAllowed = "move";
         });
 
-        checkResults();
-    });
-            
-    document.addEventListener("DOMContentLoaded", () => {
-        fetchFlashcards().then((cards) => {
-            flashcards = cards;
-            displayCards(flashcards);
+        cardContainer.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
         });
-    });
-            
-</script>
+
+        cardContainer.addEventListener("drop", (event) => {
+            event.preventDefault();
+            const draggedIndex = parseInt(event.dataTransfer.getData("text/plain"));
+            const droppedIndex = parseInt(event.target.dataset.index);
+
+            if (draggedIndex !== droppedIndex) {
+                const draggedCard = cardContainer.children[draggedIndex];
+                const droppedCard = cardContainer.children[droppedIndex];
+
+                cardContainer.insertBefore(draggedCard, droppedCard.nextElementSibling);
+                cardContainer.insertBefore(droppedCard, draggedCard);
+
+                updateCardIndices();
+                moves++;
+                moveCounter.textContent = moves;
+            }
+        });
+
+        checkResultsBtn.addEventListener("click", () => {
+            flashcards.forEach((flashcard, index) => {
+                const card = cardContainer.children[index];
+                card.textContent = flashcard.date;
+            });
+
+            checkResults();
+        });
+    </script>
 </body>
 </html>
