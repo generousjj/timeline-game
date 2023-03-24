@@ -153,8 +153,14 @@
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
-                draggedCard = card; // Use the actual card instead of a cloned one
+                if (card.parentNode === deck) { // Check if the card is in the deck
+                    draggedCard = card.cloneNode(true); // Clone the card
+                    deck.appendChild(draggedCard); // Append the clone to the deck
+                } else {
+                    draggedCard = card;
+                }
                 card.classList.add('dragged');
+            });
             });
 
             document.addEventListener('mouseup', (e) => {
