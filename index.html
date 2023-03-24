@@ -91,7 +91,6 @@
 <body>
     <div class="container">
         <div class="deck">
-            <div class="card top-card"></div>
             <button class="skip-btn">Next</button>
         </div>
         <div class="card-area">
@@ -109,7 +108,7 @@
         const checkBtn = document.querySelector('.check-btn');
         const placeholder = document.querySelector('.placeholder');
         const themeToggle = document.querySelector('.theme-toggle');
-        const topCard = document.querySelector('.top-card');
+        // const topCard = document.querySelector('.top-card');
         const cardContainer = document.querySelector('.card-container');
 
         const flashcards = [
@@ -147,14 +146,13 @@
             }
         
             const cardData = cardDeck.shift();
-            const newCard = document.createElement('div');
+            
+            
+            newCard = document.createElement('div');
             newCard.textContent = cardData.name;
             newCard.dataset.date = cardData.date;
-
             newCard.style.visibility = 'visible';
-
-            newCard.classList.add('card');
-
+            newCard.classList.add('card', 'top-card');
             setupCardEvents(newCard);
             deck.appendChild(newCard);
         }
@@ -190,15 +188,15 @@
             draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
             draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
 
-            const cardAreaRect = cardArea.getBoundingClientRect();
+            const cardContainerRect = cardContainer.getBoundingClientRect();
             const cardRect = draggedCard.getBoundingClientRect();
             const y = e.clientY;
 
-            if (y < cardAreaRect.top || y > cardAreaRect.bottom) {
+            if (y < cardContainerRect.top || y > cardContainerRect.bottom) {
                 return;
             }
 
-            const closestCard = Array.from(cardArea.children)
+            const closestCard = Array.from(cardContainer.children)
                 .filter(child => child !== draggedCard && child !== placeholder)
                 .reduce((closest, child) => {
                     const childRect = child.getBoundingClientRect();
@@ -212,7 +210,7 @@
                 }, { offset: Number.NEGATIVE_INFINITY });
 
             if (placeholder.nextSibling !== closestCard.element) {
-                cardArea.insertBefore(placeholder, closestCard.element);
+                cardContainer.insertBefore(placeholder, closestCard.element);
             }
         }
 
@@ -221,8 +219,8 @@
 
             if (draggedCard) {
                 cardArea.removeChild(draggedCard);
-                const newIndex = Array.from(cardArea.children).indexOf(placeholder);
-                cardArea.insertBefore(draggedCard, newIndex === -1 ? null : cardArea.children[newIndex]);
+                const newIndex = Array.from(cardContainer.children).indexOf(placeholder);
+                cardContainer.insertBefore(draggedCard, newIndex === -1 ? null : cardContainer.children[newIndex]);
 
                 draggedCard.style.position = '';
                 draggedCard.style.left = '';
@@ -277,11 +275,11 @@
         }
 
         skipBtn.addEventListener('click', () => {
-            const topCardData = {
-                name: topCard.textContent,
-                date: topCard.dataset.date
+            const newCardData = {
+                name: newCard.textContent,
+                date: newCard.dataset.date
             };
-            cardDeck.push(topCardData);
+            cardDeck.push(newCardData);
             drawCard();
             hasInteracted = true;
         });
