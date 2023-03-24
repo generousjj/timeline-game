@@ -45,7 +45,7 @@
             overflow-y: auto;
             background-color: #e0e0e0;
         }
-        .card-container { /* New class for the vertical container */
+        .card-container {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -96,7 +96,6 @@
         </div>
         <div class="card-area">
             <div class="card-container">
-            <!-- New container for cards -->
             </div>
             <div class="placeholder">Drag cards from the left to play!</div>
         </div>
@@ -111,6 +110,7 @@
         const placeholder = document.querySelector('.placeholder');
         const themeToggle = document.querySelector('.theme-toggle');
         const topCard = document.querySelector('.top-card');
+        const cardContainer = document.querySelector('.card-container');
 
         const flashcards = [
             { name: 'Event 1', date: 1900 },
@@ -141,6 +141,8 @@
 
         function drawCard() {
             if (cardDeck.length === 0) {
+                skipBtn.disabled = true;
+                checkResults();
                 return;
             }
 
@@ -148,16 +150,13 @@
             topCard.textContent = cardData.name;
             topCard.dataset.date = cardData.date;
 
-            // Reset the top card's visibility when drawing a new card
             topCard.style.visibility = 'visible';
 
             topCard.initialX = 0;
             topCard.initialY = 0;
 
-            // Add the 'card' class to the topCard
             topCard.classList.add('card');
 
-            // Append the top card to the deck
             deck.appendChild(topCard);
 
             setupCardEvents(topCard);
@@ -168,11 +167,11 @@
                 e.preventDefault();
                 if (card.parentNode === deck) {
                     clickTimeout = setTimeout(() => {
-                        // Long press: Drag the card
                         draggedCard = card.cloneNode(true);
                         setupCardEvents(draggedCard);
                         cardArea.appendChild(draggedCard);
                         card.style.visibility = 'hidden';
+                        placeholder.style.display = 'none'; // Hide the placeholder
                     }, 500);
                 }
             });
@@ -185,7 +184,6 @@
                 }
                 
                 if (card.parentNode === deck) {
-                    // Short click: Teleport the card
                     draggedCard = card.cloneNode(true);
                     setupCardEvents(draggedCard);
                     cardArea.insertBefore(draggedCard, placeholder);
@@ -207,7 +205,6 @@
 
                 draggedCard.style.position = 'fixed';
                 
-                // Update the position of the dragged card
                 draggedCard.style.left = `${e.clientX - draggedCard.initialX}px`;
                 draggedCard.style.top = `${e.clientY - draggedCard.initialY}px`;
 
@@ -239,7 +236,7 @@
         }
 
         function checkResults() {
-            const cardContainer = document.querySelector('.card-container'); // Add this line to select the card-container
+            const cardContainer = document.querySelector('.card-container');
 
             Array.from(cardContainer.children)
                 .filter(child => child.classList.contains('card'))
@@ -247,7 +244,6 @@
                     const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
                     card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
                     
-                    // Display event date and text when the Check Results button is clicked
                     if (!card.querySelector('.event-date')) {
                         const eventDate = document.createElement('div');
                         eventDate.classList.add('event-date');
@@ -264,6 +260,7 @@
                         card.textContent = '';
                     }
                 });
+            checkBtn.disabled = true;
         }
 
         function toggleDarkMode() {
