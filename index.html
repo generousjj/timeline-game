@@ -31,7 +31,7 @@
             padding: 0 20px;
             background-color: #cccccc;
         }
-        .skip-btn {
+        .next-button {
             margin-top: 10px;
         }
         .card-area {
@@ -65,7 +65,7 @@
             position: fixed;
         }
         .placeholder {
-            display: none;
+            /*display: none;*/
             padding: 10px 20px;
             margin: 10px;
             border: 2px dashed #00f;
@@ -81,17 +81,45 @@
             font-size: 24px;
             cursor: pointer;
         }
-        .check-btn {
+        .check-results-button {
             position: fixed;
             bottom: 10px;
             left: 10px;
         }
+        
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .message-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <div class="deck">
-            <button class="skip-btn">Next</button>
+            <button class="next-button" onclick="next()">Next</button>
         </div>
         <div class="card-area">
             <div class="card-container">
@@ -99,13 +127,17 @@
             <div class="placeholder">Drag cards from the left to play!</div>
         </div>
     </div>
-    <button class="check-btn">Check Results</button>
+    <button class="check-results-button" onclick="checkResults()">Check Results</button>
     <span class="theme-toggle">🌙</span>
+    <div id="message-box" class="message-box hidden">
+        <span id="message-text"></span>
+        <button id="message-close" class="message-close">&times;</button>
+    </div>
     <script>
         const deck = document.querySelector('.deck');
-        const skipBtn = document.querySelector('.skip-btn');
+        const skipBtn = document.querySelector('.next-button');
         const cardArea = document.querySelector('.card-area');
-        const checkBtn = document.querySelector('.check-btn');
+        const checkBtn = document.querySelector('.check-results-button');
         const placeholder = document.querySelector('.placeholder');
         const themeToggle = document.querySelector('.theme-toggle');
         // const topCard = document.querySelector('.top-card');
@@ -209,6 +241,10 @@
                     }
                 }, { offset: Number.NEGATIVE_INFINITY });
 
+            // Add the two lines here:
+            const placeholderRect = placeholder.getBoundingClientRect();
+            placeholder.style.height = `${draggedCard.offsetHeight / 2}px`;
+
             if (placeholder.nextSibling !== closestCard.element) {
                 cardContainer.insertBefore(placeholder, closestCard.element);
             }
@@ -235,7 +271,26 @@
                 document.removeEventListener('mouseup', onMouseUp);
             }
         }
+        
+        function restart() {
+            // Shuffle and update the cards
+            cardDeck = shuffle(cardDeck);
+            cardContainer.innerHTML = '';
+            cards.forEach(card => cardContainer.appendChild(drawCard(cards)));
 
+            // Re-enable the "Next" button
+            document.getElementById('next-button').disabled = false;
+
+            // Change the "Restart" button back to the "Check Results" button
+            const checkResultsButton = document.getElementById('check-results-button');
+            checkResultsButton.textContent = 'Check Results';
+            checkResultsButton.onclick = checkResults;
+
+            // Hide the message box
+            document.getElementById('message-box').classList.add('hidden');
+            
+            drawCard();
+        }
         
         function checkResults() {
             let prevDate = null;
@@ -258,11 +313,24 @@
                     }
                 });
 
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+
+            
             if (allCorrect) {
-                alert("Congratulations! You've successfully ordered the events.");
+                messageText.textContent = ("Congratulations! You've successfully ordered the events.");
             } else {
-                alert("Some events are not in the correct order. Please try again.");
+                messageText.textContent = ("Some events are not in the correct order. Please try again.");
             }
+            
+            messageBox.classList.remove('hidden');
+            
+            document.getElementById('next-button').disabled = true;
+
+            // Change the "Check Results" button to a "Restart" button
+            const checkResultsButton = document.getElementById('check-results-button');
+            checkResultsButton.textContent = 'Restart';
+            checkResultsButton.onclick = restart;
         }
 
         function toggleDarkMode() {
@@ -272,6 +340,7 @@
             deck.style.backgroundColor = isDarkMode ? '#34495e' : '#cccccc';
             cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
             themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+            document.getElementById('message-box').style.backgroundColor = isDarkMode ? '#424549' : '#f1f1f1';
         }
 
         skipBtn.addEventListener('click', () => {
@@ -297,6 +366,10 @@
                 e.preventDefault();
                 e.returnValue = '';
             }
+        });
+        
+        document.getElementById('message-close').addEventListener('click', () => {
+            document.getElementById('message-box').classList.add('hidden');
         });
         
         cardDeck = shuffle(cardDeck);
