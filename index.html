@@ -147,25 +147,27 @@
                 e.preventDefault();
                 draggedCard = card;
                 card.classList.add('dragged');
+                // Store initial position for the card
+                card.initialX = e.clientX - card.getBoundingClientRect().left;
+                card.initialY = e.clientY - card.getBoundingClientRect().top;
             });
 
             card.addEventListener('mouseup', (e) => {
                 e.preventDefault();
                 card.classList.remove('dragged');
                 draggedCard = null;
-                if (placeholder.parentNode === cardArea) {
-                    placeholder.remove();
-                }
-                hasInteracted = true;
             });
 
-            draggedCard.style.transform = `translate(${e.pageX - draggedCard.clientWidth / 2}px, ${e.pageY - draggedCard.clientHeight / 2}px)`;
-            
-            card.addEventListener('mousemove', (e) => {
+            cardArea.addEventListener('mousemove', (e) => {
                 e.preventDefault();
                 if (!draggedCard) {
                     return;
                 }
+
+                // Update the position of the dragged card
+                draggedCard.style.left = `${e.clientX - draggedCard.initialX}px`;
+                draggedCard.style.top = `${e.clientY - draggedCard.initialY}px`;
+                draggedCard.style.position = 'absolute';
 
                 const cardAreaRect = cardArea.getBoundingClientRect();
                 const cardRect = draggedCard.getBoundingClientRect();
@@ -193,6 +195,7 @@
                 }
             });
         }
+
 
         function checkResults() {
             Array.from(cardArea.children)
