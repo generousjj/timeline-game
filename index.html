@@ -84,7 +84,7 @@
 <body>
     <div class="container">
         <div class="deck">
-            <div class="card top-card">Top Card</div>
+            <div class="card top-card"></div>
             <button class="skip-btn">Skip</button>
         </div>
         <div class="card-area">
@@ -113,7 +113,7 @@
         let draggedCard = null;
         let cardDeck = [...flashcards];
         let hasInteracted = false;
-
+        
         function shuffle(array) {
             let currentIndex = array.length, temporaryValue, randomIndex;
 
@@ -140,7 +140,7 @@
 
             setupCardEvents(topCard);
         }
-        
+
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
@@ -214,38 +214,37 @@
             document.body.style.backgroundColor = isDarkMode ? '#2c3e50' : 'white';
             document.body.style.color = isDarkMode ? 'white' : 'black';
             deck.style.backgroundColor = isDarkMode ? '#34495e' : '#cccccc';
-            cardArea.style.backgroundColor = isDarkMode ?
-                cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
-                themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
-            }
+            cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
+            themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+        }
 
-            cardDeck = shuffle(cardDeck);
+        cardDeck = shuffle(cardDeck);
+        drawCard();
+
+        skipBtn.addEventListener('click', () => {
+            const topCardData = {
+                name: topCard.textContent,
+                date: topCard.dataset.date
+            };
+            cardDeck.push(topCardData);
             drawCard();
+            hasInteracted = true;
+        });
 
-            skipBtn.addEventListener('click', () => {
-                const topCardData = {
-                    name: topCard.textContent,
-                    date: topCard.dataset.date
-                };
-                cardDeck.push(topCardData);
-                drawCard();
-                hasInteracted = true;
-            });
+        checkBtn.addEventListener('click', () => {
+            checkResults();
+        });
 
-            checkBtn.addEventListener('click', () => {
-                checkResults();
-            });
+        themeToggle.addEventListener('click', () => {
+            toggleDarkMode();
+        });
 
-            themeToggle.addEventListener('click', () => {
-                toggleDarkMode();
-            });
-
-            window.addEventListener('beforeunload', (e) => {
-                if (hasInteracted) {
-                    e.preventDefault();
-                    e.returnValue = '';
-                }
-            });
-        </script>
-    </body>
+        window.addEventListener('beforeunload', (e) => {
+            if (hasInteracted) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
 </html>
