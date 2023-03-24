@@ -158,6 +158,9 @@
                 e.preventDefault();
                 card.classList.remove('dragged');
                 if (draggedCard) {
+                    const cardElement = draggedCard.cloneNode(true);
+                    setupCardEvents(cardElement);
+                    cardArea.insertBefore(cardElement, placeholder);
                     draggedCard.remove();
                 }
                 draggedCard = null;
