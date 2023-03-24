@@ -159,6 +159,8 @@
                 hasInteracted = true;
             });
 
+            draggedCard.style.transform = `translate(${e.pageX - draggedCard.clientWidth / 2}px, ${e.pageY - draggedCard.clientHeight / 2}px)`;
+            
             card.addEventListener('mousemove', (e) => {
                 e.preventDefault();
                 if (!draggedCard) {
