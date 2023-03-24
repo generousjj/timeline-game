@@ -3,218 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AP History Card Sorting Game</title>
+    <title>Timeline Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: white;
+            color: black;
         }
-        #deck {
-            background-color: #f0f0f0;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 150px;
-            text-align: center;
-            margin-bottom: 10px;
+        .container {
+            display: flex;
+            justify-content: space-between;
+            border-right: 2px solid black;
+            height: 90%;
+            width: 90%;
         }
-        #card-container {
+        .deck {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            width: 40%;
+            height: 100%;
+            padding: 0 20px;
+            background-color: #cccccc;
+        }
+        .skip-btn {
+            margin-top: 10px;
+        }
+        .card-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 60%;
+            height: 100%;
+            padding: 0 20px;
             overflow-y: auto;
-            max-height: 500px;
-            width: 200px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            box-sizing: border-box;
+            background-color: white;
         }
         .card {
-            background-color: #f0f0f0;
-            padding: 20px;
-            border: 1px solid #ccc;
+            padding: 10px 20px;
+            margin: 10px;
+            border: 1px solid #999;
             border-radius: 5px;
-            cursor: move;
-            width: 150px;
-            text-align: center;
-            transition: background-color 0.5s;
-        }
-        .correct {
-            background-color: rgba(0, 255, 0, 0.2);
-        }
-        .incorrect {
-            background-color: rgba(255, 0, 0, 0.2);
+            cursor: grab;
         }
         .dragged {
+            cursor: grabbing;
             opacity: 0.5;
         }
+        .check-btn {
+            margin-top: 10px;
+        }
         .placeholder {
-            display: none;
-            background-color: rgba(0, 0, 255, 0.2);
-            width: 0;
-            transition: width 0.3s;
-            position: relative;
-        }
-        .placeholder.show {
-            display: block;
-            width: 150px;
-            height: 50px;
-            margin-bottom: 10px;
-        }
-        .placeholder::before {
-            content: '+';
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            margin: 10px;
+            border: 2px dashed #00f;
+            border-radius: 5px;
+            color: #00f;
             font-weight: bold;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
             font-size: 24px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1>AP History Card Sorting Game</h1>
-    <div id="deck">Click to draw a card</div>
-    <div id="card-container"></div>
-    <button id="check-results" disabled>Check Results</button>
-    <div class="card placeholder"></div>
-
+    <div class="container">
+        <div class="deck">
+            <div class="card">Top Card</div>
+            <button class="skip-btn">Skip</button>
+        </div>
+        <div class="card-area">
+            <div class="placeholder">Drag cards from the left to play!</div>
+        </div>
+    </div>
+    <button class="check-btn">Check Results</button>
+    <span class="theme-toggle">🌙</span>
     <script>
-        let flashcards = [
-            { "name": "Event A", "date": "1900" },
-            { "name": "Event B", "date": "1920" },
-            { "name": "Event C", "date": "1940" },
-            { "name": "Event D", "date": "1960" },
-            { "name": "Event E", "date": "1980" }
+        const deck = document.querySelector('.deck');
+        const skipBtn = document.querySelector('.skip-btn');
+        const cardArea = document.querySelector('.card-area');
+        const checkBtn = document.querySelector('.check-btn');
+        const placeholder = document.querySelector('.placeholder');
+        const themeToggle = document.querySelector('.theme-toggle');
+
+        const flashcards = [
+            { name: 'Event 1', date: 1900 },
+            { name: 'Event 2', date: 1910 },
+            { name: 'Event 3', date: 1920 },
+            // Add more cards here
         ];
 
-        const deck = document.getElementById("deck");
-        const cardContainer = document.getElementById("card-container");
-        const checkResultsBtn = document.getElementById("check-results");
-        const placeholder = document.querySelector(".placeholder");
-        let moves = 0;
+        let isDarkMode = false;
         let draggedCard = null;
-        let currentIndex = -1;
+        let cardDeck = [...flashcards];
 
         function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+            let currentIndex = array.length, temporaryValue, randomIndex;
+
+            while (0 !== currentIndex) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
             }
+
+            return array;
         }
 
         function drawCard() {
-            const cardData = flashcards.shift();
-
-            if (cardData) {
-                const card = document.createElement("div");
-                card.className = "card";
-                card.textContent = cardData.name;
-                card.draggable = true;
-                cardContainer.appendChild(card);
-                checkResultsBtn.disabled = false;
-            } else {
-                deck.removeEventListener("click", drawCard);
-                deck.style.cursor = "default";
+            if (cardDeck.length === 0) {
+                return;
             }
+
+            const cardData = cardDeck.shift();
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.textContent = cardData.name;
+            card.dataset.date = cardData.date;
+
+            cardArea.insertBefore(card, placeholder.nextSibling);
+
+            setupCardEvents(card);
         }
 
-        function checkResults() {
-            let previousDate = null;
-            Array.from(cardContainer.children).forEach((card, index) => {
-                card.classList.remove("correct", "incorrect");
+        function setupCardEvents(card) {
+            card.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                draggedCard = card;
+                card.classList.add('dragged');
+            });
 
-                if (previousDate === null || flashcards[index].date >= previousDate) {
-                    card.classList.add("correct");
-                    previousDate = flashcards[index].date;
-                } else {
-                    card.classList.add("incorrect");
-                    previousDate = flashcards[index].date;
+            card.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                card.classList.remove('dragged');
+                draggedCard = null;
+            });
+
+            card.addEventListener('mousemove', (e) => {
+                e.preventDefault();
+                if (!draggedCard) {
+                    return;
+                }
+
+                const cardAreaRect = cardArea.getBoundingClientRect();
+                const cardRect = draggedCard.getBoundingClientRect();
+                const y = e.clientY;
+
+                if (y < cardAreaRect.top || y > cardAreaRect.bottom) {
+                    return;
+                }
+
+                const closestCard = Array.from(cardArea.children)
+                    .filter(child => child !== draggedCard && child !== placeholder)
+                    .reduce((closest, child) => {
+                        const childRect = child.getBoundingClientRect();
+                        const offset = y - childRect.top - childRect.height / 2;
+
+                        if (offset < 0 && offset > closest.offset) {
+                            return { offset, element: child };
+                        } else {
+                            return closest;
+                        }
+                    }, { offset: Number.NEGATIVE_INFINITY });
+
+                if (placeholder.nextSibling !== closestCard.element) {
+                    cardArea.insertBefore(placeholder, closestCard.element);
                 }
             });
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            shuffle(flashcards);
-            deck.addEventListener("click", drawCard);
+        function checkResults() {
+            Array.from(cardArea.children)
+                .filter(child => child.classList.contains('card'))
+                .forEach((card, index, cards) => {
+                    const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
+                    card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
+                });
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.style.backgroundColor = isDarkMode ? '#2c3e50' : 'white';
+            document.body.style.color = isDarkMode ? 'white' : 'black';
+            deck.style.backgroundColor = isDarkMode ? '#34495e' : '#cccccc';
+            cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
+            themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+        }
+
+        cardDeck = shuffle(cardDeck);
+        drawCard();
+
+        skipBtn.addEventListener('click', () => {
+            cardDeck.push(cardDeck.shift());
+            drawCard();
         });
 
-        cardContainer.addEventListener("dragstart", (event) => {
-            draggedCard = event.target;
-            currentIndex = Array.from(cardContainer.children).indexOf(draggedCard);
-            draggedCard.classList.add("dragged");
-            setTimeout(() => {
-                placeholder.style.height = `${draggedCard.offsetHeight}px`;
-                draggedCard.style.display = "none";
-            }, 0);
+        checkBtn.addEventListener('click', () => {
+            checkResults();
         });
 
-        cardContainer.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            const targetCard = event.target.closest(".card");
+        themeToggle.addEventListener('click', () => {
+            toggleDarkMode();
+        });
 
-            if (targetCard) {
-                const targetIndex = Array.from(cardContainer.children).indexOf(targetCard);
-
-                if (currentIndex < targetIndex) {
-                    cardContainer.insertBefore(placeholder, targetCard.nextElementSibling);
-                } else {
-                    cardContainer.insertBefore(placeholder, targetCard);
-                }
-                placeholder.classList.add("show");
+        window.addEventListener('beforeunload', (e) => {
+            if (document.querySelector('.card')) {
+                e.preventDefault();
+                e.returnValue = '';
             }
         });
-
-        cardContainer.addEventListener("dragleave", (event) => {
-            event.preventDefault();
-            const targetCard = event.target.closest(".card");
-            if (targetCard) {
-                setTimeout(() => {
-                    if (!cardContainer.contains(document.elementFromPoint(event.clientX, event.clientY))) {
-                        placeholder.classList.remove("show");
-                    }
-                }, 50);
-            }
-        });
-
-        cardContainer.addEventListener("drop", (event) => {
-            event.preventDefault();
-            placeholder.classList.remove("show");
-            cardContainer.insertBefore(draggedCard, placeholder);
-            draggedCard.style.display = "block";
-            draggedCard.classList.remove("dragged");
-            setTimeout(() => {
-                placeholder.style.height = "0";
-            }, 300);
-
-            moves++;
-        });
-
-        document.addEventListener("mouseup", (event) => {
-            if (draggedCard && !cardContainer.contains(document.elementFromPoint(event.clientX, event.clientY))) {
-                placeholder.classList.remove("show");
-                cardContainer.insertBefore(draggedCard, placeholder);
-                draggedCard.style.display = "block";
-                draggedCard.classList.remove("dragged");
-                setTimeout(() => {
-                    placeholder.style.height = "0";
-                }, 300);
-                draggedCard = null;
-                currentIndex = -1;
-            }
-        });
-
-        checkResultsBtn.addEventListener("click", () => {
-            flashcards = Array.from(cardContainer.children).map((card, index) => {
-                return { "name": card.textContent, "date": flashcards[index].date };
-});
-checkResults();
-});
-</script>
-
+    </script>
 </body>
 </html>
