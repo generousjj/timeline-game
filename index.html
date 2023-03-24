@@ -5,117 +5,239 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timeline Game</title>
     <style>
-        /* Add some basic styling */
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: white;
+            color: black;
+        }
+        .container {
+            display: flex;
             justify-content: space-between;
+            border-right: 2px solid black;
+            height: 90%;
+            width: 90%;
         }
-
-        #deck {
-            flex: 1;
-            background-color: gray;
-            padding: 1rem;
-            margin-right: 1rem;
+        .deck {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 40%;
+            height: 100%;
+            padding: 0 20px;
+            background-color: #cccccc;
         }
-
-        #top-card {
+        .skip-btn {
+            margin-top: 10px;
+        }
+        .card-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 60%;
+            height: 100%;
+            padding: 0 20px;
+            overflow-y: auto;
             background-color: white;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            cursor: pointer;
         }
-
-        #playing-area {
-            flex: 3;
-            background-color: white;
-            padding: 1rem;
-            position: relative;
-        }
-
         .card {
-            background-color: white;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            cursor: move;
+            padding: 10px 20px;
+            margin: 10px;
+            border: 1px solid #999;
+            border-radius: 5px;
+            cursor: grab;
         }
-
-        #placeholder {
-            background-color: lightblue;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            display: none;
+        .dragged {
+            cursor: grabbing;
+            opacity: 0.5;
         }
-
-        #check-btn {
+        .check-btn {
             position: fixed;
+            bottom: 10px;
+            right: 10px;
+        }
+        .placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            margin: 10px;
+            border: 2px dashed #00f;
+            border-radius: 5px;
+            color: #00f;
+            font-weight: bold;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div id="deck">
-        <div id="top-card">Top Card</div>
-        <button id="skip-btn">Skip</button>
+    <div class="container">
+        <div class="deck">
+            <div class="card top-card">Top Card</div>
+            <button class="skip-btn">Skip</button>
+        </div>
+        <div class="card-area">
+            <div class="placeholder">Drag cards from the left to play!</div>
+        </div>
     </div>
-    <div id="playing-area">
-        <div id="placeholder">Drag cards from the left to play!</div>
-        <button id="check-btn">Check Results</button>
-    </div>
-
+    <button class="check-btn">Check Results</button>
+    <span class="theme-toggle">🌙</span>
     <script>
-        const cards = [
-            { name: 'Signing of the Declaration of Independence', date: '1776' },
-            { name: 'Start of the American Revolution', date: '1775' },
-            { name: 'End of the American Revolution', date: '1783' },
-            { name: 'Signing of the United States Constitution', date: '1787' },
+        const deck = document.querySelector('.deck');
+        const skipBtn = document.querySelector('.skip-btn');
+        const cardArea = document.querySelector('.card-area');
+        const checkBtn = document.querySelector('.check-btn');
+        const placeholder = document.querySelector('.placeholder');
+        const themeToggle = document.querySelector('.theme-toggle');
+        const topCard = document.querySelector('.top-card');
+
+        const flashcards = [
+            { name: 'Event 1', date: 1900 },
+            { name: 'Event 2', date: 1910 },
+            { name: 'Event 3', date: 1920 },
+            // Add more cards here
         ];
 
-        const cardDeck = [...cards];
-        let userInteracted = false;
-        const topCard = document.querySelector('#top-card');
-        const skipBtn = document.querySelector('#skip-btn');
-        const playingArea = document.querySelector('#playing-area');
-        const checkBtn = document.querySelector('#check-btn');
-        const placeholder = document.querySelector('#placeholder');
+        let isDarkMode = false;
+        let draggedCard = null;
+        let cardDeck = [...flashcards];
+        let hasInteracted = false;
 
-        function updateTopCard() {
-            if (cardDeck.length) {
-                topCard.textContent = cardDeck[0].name;
-                topCard.dataset.date = cardDeck[0].date;
-            } else {
-                topCard.textContent = 'Deck is empty';
-                topCard.dataset.date = '';
+        function shuffle(array) {
+            let currentIndex = array.length, temporaryValue, randomIndex;
+
+            while (0 !== currentIndex) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
             }
+
+            return array;
         }
 
-        checkBtn.style.right = '1rem';
-        checkBtn.style.bottom = '1rem';
+        function drawCard() {
+            if (cardDeck.length === 0) {
+                return;
+            }
+
+            const cardData = cardDeck.shift();
+            topCard.textContent = cardData.name;
+            topCard.dataset.date = cardData.date;
+
+            setupCardEvents(topCard);
+        }
+
+        function setupCardEvents(card) {
+            card.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                draggedCard = card;
+                card.classList.add('dragged');
+            });
+
+            card.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                card.classList.remove('dragged');
+                draggedCard = null;
+                if (placeholder.parentNode === cardArea) {
+                    placeholder.remove();
+                }
+                hasInteracted = true;
+            });
+
+            card.addEventListener('mousemove', (e) => {
+                e.preventDefault();
+                if (!draggedCard) {
+                    return;
+                }
+
+                const cardAreaRect = cardArea.getBoundingClientRect();
+                const cardRect = draggedCard.getBoundingClientRect();
+                const y = e.clientY;
+
+                if (y < cardAreaRect.top || y > cardAreaRect.bottom) {
+                    return;
+                }
+
+                const closestCard = Array.from(cardArea.children)
+                    .filter(child => child !== draggedCard && child !== placeholder)
+                    .reduce((closest, child) => {
+                        const childRect = child.getBoundingClientRect();
+                        const offset = y - childRect.top - childRect.height / 2;
+
+                        if (offset < 0 && offset > closest.offset) {
+                            return { offset, element: child };
+                        } else {
+                            return closest;
+                        }
+                    }, { offset: Number.NEGATIVE_INFINITY });
+
+                if (placeholder.nextSibling !== closestCard.element) {
+                    cardArea.insertBefore(placeholder, closestCard.element);
+                }
+            });
+        }
+
+        function checkResults() {
+            Array.from(cardArea.children)
+                .filter(child => child.classList.contains('card'))
+                .forEach((card, index, cards) => {
+                    const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
+                    card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
+                });
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.style.backgroundColor = isDarkMode ? '#2c3e50' : 'white';
+            document.body.style.color = isDarkMode ? 'white' : 'black';
+            deck.style.backgroundColor = isDarkMode ? '#34495e' : '#cccccc';
+            cardArea.style.backgroundColor = isDarkMode ? '#4b6584' : 'white';
+            themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+        }
+
+        cardDeck = shuffle(cardDeck);
+        drawCard();
+
+        skipBtn.addEventListener('click', () => {
+            const topCardData = {
+                name: topCard.textContent,
+                date: topCard.dataset.date
+            };
+            cardDeck.push(topCardData);
+            cardDeck = shuffle(cardDeck);
+            drawCard();
+            hasInteracted = true;
+        });
+
+        checkBtn.addEventListener('click', () => {
+            checkResults();
+        });
+
+        themeToggle.addEventListener('click', () => {
+            toggleDarkMode();
+        });
 
         window.addEventListener('beforeunload', (e) => {
-            if (userInteracted) {
+            if (hasInteracted) {
                 e.preventDefault();
                 e.returnValue = '';
             }
         });
-
-        skipBtn.addEventListener('click', () => {
-            if (cardDeck.length) {
-                const skippedCard = cardDeck.shift();
-                cardDeck.push(skippedCard);
-                updateTopCard();
-            }
-        });
-
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        shuffle(cardDeck);
-        updateTopCard();
     </script>
 </body>
 </html>
