@@ -152,9 +152,6 @@
 
             topCard.style.visibility = 'visible';
 
-            topCard.initialX = 0;
-            topCard.initialY = 0;
-
             topCard.classList.add('card');
 
             deck.appendChild(topCard);
@@ -205,8 +202,8 @@
 
                 draggedCard.style.position = 'fixed';
                 
-                draggedCard.style.left = `${e.clientX - draggedCard.initialX}px`;
-                draggedCard.style.top = `${e.clientY - draggedCard.initialY}px`;
+                draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
+                draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
 
                 const cardAreaRect = cardArea.getBoundingClientRect();
                 const cardRect = draggedCard.getBoundingClientRect();
@@ -236,31 +233,31 @@
         }
 
         function checkResults() {
-            const cardContainer = document.querySelector('.card-container');
+            if (cardDeck.length === 0) {
+                Array.from(cardContainer.children)
+                    .filter(child => child.classList.contains('card'))
+                    .forEach((card, index, cards) => {
+                        const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
+                        card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
+                        
+                        if (!card.querySelector('.event-date')) {
+                            const eventDate = document.createElement('div');
+                            eventDate.classList.add('event-date');
+                            eventDate.textContent = card.dataset.date;
+                            card.prepend(eventDate);
 
-            Array.from(cardContainer.children)
-                .filter(child => child.classList.contains('card'))
-                .forEach((card, index, cards) => {
-                    const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
-                    card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
-                    
-                    if (!card.querySelector('.event-date')) {
-                        const eventDate = document.createElement('div');
-                        eventDate.classList.add('event-date');
-                        eventDate.textContent = card.dataset.date;
-                        card.prepend(eventDate);
+                            const eventText = document.createElement('div');
+                            eventText.classList.add('event-text');
+                            eventText.style.fontStyle = 'italic';
+                            eventText.style.fontSize = 'smaller';
+                            eventText.textContent = card.textContent;
+                            card.appendChild(eventText);
 
-                        const eventText = document.createElement('div');
-                        eventText.classList.add('event-text');
-                        eventText.style.fontStyle = 'italic';
-                        eventText.style.fontSize = 'smaller';
-                        eventText.textContent = card.textContent;
-                        card.appendChild(eventText);
-
-                        card.textContent = '';
-                    }
-                });
-            checkBtn.disabled = true;
+                            card.textContent = '';
+                        }
+                    });
+                checkBtn.disabled = true;
+            }
         }
 
         function toggleDarkMode() {
@@ -283,7 +280,9 @@
         });
 
         checkBtn.addEventListener('click', () => {
-            checkResults();
+            if (cardDeck.length === 0) {
+                checkResults();
+            }
         });
 
         themeToggle.addEventListener('click', () => {
