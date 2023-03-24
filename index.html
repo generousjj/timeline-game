@@ -43,7 +43,7 @@
             height: 100%;
             padding: 0 20px;
             overflow-y: auto;
-            background-color: white;
+            background-color: #e0e0e0;
         }
         .card-container { /* New class for the vertical container */
             display: flex;
@@ -72,6 +72,7 @@
             border-radius: 5px;
             color: #00f;
             font-weight: bold;
+            background-color: #b19cd9;
         }
         .theme-toggle {
             position: fixed;
@@ -155,7 +156,7 @@
                 e.preventDefault();
                 if (card.parentNode === deck) { // Check if the card is in the deck
                     draggedCard = card.cloneNode(true); // Clone the card
-                    deck.appendChild(draggedCard); // Append the clone to the deck
+                    cardArea.appendChild(draggedCard); // Append the clone to the card area
                 } else {
                     draggedCard = card;
                 }
@@ -163,6 +164,7 @@
                 
                 draggedCard.initialX = e.clientX - draggedCard.getBoundingClientRect().left;
                 draggedCard.initialY = e.clientY - draggedCard.getBoundingClientRect().top;
+                placeholder.style.display = 'none';
             });
 
             document.addEventListener('mouseup', (e) => {
@@ -216,7 +218,9 @@
         }
 
         function checkResults() {
-            Array.from(cardArea.children)
+            const cardContainer = document.querySelector('.card-container'); // Add this line to select the card-container
+
+            Array.from(cardContainer.children)
                 .filter(child => child.classList.contains('card'))
                 .forEach((card, index, cards) => {
                     const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
