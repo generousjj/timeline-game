@@ -57,15 +57,15 @@
             border: 1px solid #999;
             border-radius: 5px;
             cursor: grab;
+            user-select: none;
         }
         .dragged {
             cursor: grabbing;
             opacity: 0.5;
+            position: fixed;
         }
         .placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: none;
             padding: 10px 20px;
             margin: 10px;
             border: 2px dashed #00f;
@@ -154,42 +154,48 @@
 
             topCard.classList.add('card');
 
-            deck.appendChild(topCard);
+            
 
             setupCardEvents(topCard);
+            deck.appendChild(topCard);
         }
 
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
+
                 if (card.parentNode === deck) {
-                    clickTimeout = setTimeout(() => {
-                        draggedCard = card.cloneNode(true);
-                        setupCardEvents(draggedCard);
-                        cardArea.appendChild(draggedCard);
-                        card.style.visibility = 'hidden';
-                        placeholder.style.display = 'none'; // Hide the placeholder
-                    }, 500);
+                    draggedCard = card.cloneNode(true);
+                    setupCardEvents(draggedCard);
+                    cardArea.appendChild(draggedCard);
+                    card.style.visibility = 'hidden';
+                    placeholder.style.display = 'none'; // Hide the placeholder
+
+                    draggedCard.classList.add('dragged');
+                    draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
+                    draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
                 }
             });
 
             card.addEventListener('mouseup', (e) => {
                 e.preventDefault();
-                if (clickTimeout) {
-                    clearTimeout(clickTimeout);
-                    clickTimeout = null;
-                }
                 
                 if (card.parentNode === deck) {
-                    draggedCard = card.cloneNode(true);
-                    setupCardEvents(draggedCard);
-                    cardArea.insertBefore(draggedCard, placeholder);
-                    card.style.visibility = 'hidden';
-                    drawCard();
-                } else {
-                    card.classList.remove('dragged');
-                    if (draggedCard) {
-                        draggedCard = null;
+                    return;
+                }
+
+                if (draggedCard) {
+                    cardArea.removeChild(draggedCard);
+                    const newIndex = Array.from(cardArea.children).indexOf(placeholder);
+                    cardArea.insertBefore(draggedCard, newIndex === -1 ? null : cardArea.children[newIndex]);
+
+                    draggedCard.style.position = '';
+                    draggedCard.style.left = '';
+                    draggedCard.style.top = '';
+                    draggedCard.classList.remove('dragged');
+
+                    if (card.parentNode === deck) {
+                        drawCard();
                     }
                 }
             });
@@ -200,8 +206,6 @@
                     return;
                 }
 
-                draggedCard.style.position = 'fixed';
-                
                 draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
                 draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
 
@@ -229,34 +233,35 @@
                 if (placeholder.nextSibling !== closestCard.element) {
                     cardArea.insertBefore(placeholder, closestCard.element);
                 }
+           
             });
         }
-
+        
         function checkResults() {
-            if (cardDeck.length === 0) {
-                Array.from(cardContainer.children)
-                    .filter(child => child.classList.contains('card'))
-                    .forEach((card, index, cards) => {
-                        const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
-                        card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
-                        
-                        if (!card.querySelector('.event-date')) {
-                            const eventDate = document.createElement('div');
-                            eventDate.classList.add('event-date');
-                            eventDate.textContent = card.dataset.date;
-                            card.prepend(eventDate);
+            let prevDate = null;
+            let allCorrect = true;
 
-                            const eventText = document.createElement('div');
-                            eventText.classList.add('event-text');
-                            eventText.style.fontStyle = 'italic';
-                            eventText.style.fontSize = 'smaller';
-                            eventText.textContent = card.textContent;
-                            card.appendChild(eventText);
+            Array.from(cardContainer.children)
+                .filter(child => child.classList.contains('card'))
+                .forEach((card, index) => {
+                    const cardDate = Number(card.dataset.date);
+                    const isCorrect = prevDate === null || prevDate <= cardDate;
+                    allCorrect = allCorrect && isCorrect;
+                    card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
+                    prevDate = cardDate;
 
-                            card.textContent = '';
-                        }
-                    });
-                checkBtn.disabled = true;
+                    if (!card.querySelector('.event-date')) {
+                        const eventDate = document.createElement('div');
+                        eventDate.classList.add('event-date');
+                        eventDate.textContent = card.dataset.date;
+                        card.prepend(eventDate);
+                    }
+                });
+
+            if (allCorrect) {
+                alert("Congratulations! You've successfully ordered the events.");
+            } else {
+                alert("Some events are not in the correct order. Please try again.");
             }
         }
 
@@ -280,9 +285,7 @@
         });
 
         checkBtn.addEventListener('click', () => {
-            if (cardDeck.length === 0) {
                 checkResults();
-            }
         });
 
         themeToggle.addEventListener('click', () => {
