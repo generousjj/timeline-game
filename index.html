@@ -160,7 +160,9 @@
                     draggedCard = card;
                 }
                 card.classList.add('dragged');
-            });
+                
+                draggedCard.initialX = e.clientX - draggedCard.getBoundingClientRect().left;
+                draggedCard.initialY = e.clientY - draggedCard.getBoundingClientRect().top;
             });
 
             document.addEventListener('mouseup', (e) => {
@@ -180,6 +182,8 @@
                     return;
                 }
 
+                draggedCard.style.position = 'fixed';
+                
                 // Update the position of the dragged card
                 draggedCard.style.left = `${e.clientX - draggedCard.initialX}px`;
                 draggedCard.style.top = `${e.clientY - draggedCard.initialY}px`;
@@ -212,7 +216,7 @@
         }
 
         function checkResults() {
-            Array.from(cardContainer.children) // Use 'cardContainer' instead of 'cardArea'
+            Array.from(cardArea.children)
                 .filter(child => child.classList.contains('card'))
                 .forEach((card, index, cards) => {
                     const isCorrect = !index || Number(cards[index - 1].dataset.date) <= Number(card.dataset.date);
