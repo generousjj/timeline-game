@@ -13,12 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-const queryString = window.location.search;
-console.log(queryString)
-const urlParams = new URLSearchParams(queryString);
-console.log(urlParams)
-const isDark = urlParams.get('dark');
-console.log(isDark)
+const isDark = new URLSearchParams(window.location.search).get('dark');
 
 
 const deck = document.querySelector('.deck');
@@ -44,9 +39,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
   else if (isDark !== 'disabled') {
 
-    let stateObj = { id: "100" };
-    window.history.pushState(stateObj,
-					"Page", "/?dark=disabled");
+    const currentPage = window.location.pathname;
+    window.history.pushState({ id: "100" }, "Page", `${currentPage}?dark=disabled`);
+
   }
 });
 
@@ -245,16 +240,17 @@ function restart() {
   window.onbeforeunload = null;
 
   let url = new URL(window.location.href);
+  const currentPage = window.location.pathname;
   
   // Reload the page
   if (document.body.classList.contains('dark-mode')) {
     url.searchParams.set('dark', 'enabled');
-    window.location.href = url.href;
   } else {
-    let url = new URL(window.location.href);
     url.searchParams.set('dark', 'disabled');
-    window.location.href = url.href;
   }
+  url.pathname = currentPage;
+  window.location.href = url.href;
+
 }
 
 function newSubject() {
