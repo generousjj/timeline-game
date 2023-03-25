@@ -31,8 +31,13 @@
             padding: 0 20px;
             background-color: #cccccc;
         }
+        
+ 
+
         .next-button {
+            position: absolute;
             margin-top: 10px;
+            transform: translateY(-400%);
         }
         .card-area {
             display: flex;
@@ -47,9 +52,11 @@
         }
         .card-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            flex-wrap: wrap;
             align-items: center;
             width: 100%;
+            max-width: 500px; /* Adjust this value based on the desired width */
         }
         .card {
             padding: 10px 20px;
@@ -115,8 +122,10 @@
         }
 
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 </head>
 <body>
+    
     <div class="container">
         <div class="deck">
             <button class="next-button" onclick="next()">Next</button>
@@ -127,7 +136,7 @@
             <div class="placeholder">Drag cards from the left to play!</div>
         </div>
     </div>
-    <button class="check-results-button" onclick="checkResults()">Check Results</button>
+    <button id="check-results-button" class="check-results-button" onclick=checkResults() disabled>Check Results</button>
     <span class="theme-toggle">🌙</span>
     <div id="message-box" class="message-box hidden">
         <span id="message-text"></span>
@@ -178,7 +187,11 @@
             }
         
             const cardData = cardDeck.shift();
-            
+
+            const existingTopCard = document.querySelector('.top-card');
+            if (existingTopCard) {
+                existingTopCard.classList.remove('top-card');
+            }
             
             newCard = document.createElement('div');
             newCard.textContent = cardData.name;
@@ -189,6 +202,15 @@
             deck.appendChild(newCard);
         }
 
+        function updateCheckResultsButton() {
+            const checkResultsButton = document.getElementById('check-results-button');
+            if (cardContainer.children.length > 0) {
+                checkResultsButton.disabled = false;
+            } else {
+                checkResultsButton.disabled = true;
+            }
+        }
+        
         function setupCardEvents(card) {
             card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
@@ -254,41 +276,65 @@
             e.preventDefault();
 
             if (draggedCard) {
-                cardArea.removeChild(draggedCard);
-                const newIndex = Array.from(cardContainer.children).indexOf(placeholder);
-                cardContainer.insertBefore(draggedCard, newIndex === -1 ? null : cardContainer.children[newIndex]);
+                const deckRect = deck.getBoundingClientRect();
+                const isOverDeck = e.clientX >= deckRect.left && e.clientX <= deckRect.right &&
+                    e.clientY >= deckRect.top && e.clientY <= deckRect.bottom;
 
-                draggedCard.style.position = '';
-                draggedCard.style.left = '';
-                draggedCard.style.top = '';
-                draggedCard.classList.remove('dragged');
-
-                if (draggedCard.parentNode === deck) {
+                if (isOverDeck) {
+                    // Append card to the bottom of the cardDeck
+                    const cardData = {
+                        name: draggedCard.textContent,
+                        date: parseInt(draggedCard.dataset.date, 10)
+                    };
+                    cardDeck.push(cardData);
+                    cardArea.removeChild(draggedCard);
+                    deck.removeChild(document.querySelector('.top-card'));
                     drawCard();
+                } else {
+                    cardArea.removeChild(draggedCard);
+                    const newIndex = Array.from(cardContainer.children).indexOf(placeholder);
+                    cardContainer.insertBefore(draggedCard, newIndex === -1 ? null : cardContainer.children[newIndex]);
+
+                    draggedCard.style.position = '';
+                    draggedCard.style.left = '';
+                    draggedCard.style.top = '';
+                    draggedCard.classList.remove('dragged');
+
+                    if (draggedCard.parentNode === deck) {
+                        drawCard();
+                    }
                 }
 
+                updateCheckResultsButton();
+                
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
             }
         }
         
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        
         function restart() {
-            // Shuffle and update the cards
-            cardDeck = shuffle(cardDeck);
-            cardContainer.innerHTML = '';
-            cards.forEach(card => cardContainer.appendChild(drawCard(cards)));
+            // Remove existing cards in the card container
+            while (cardContainer.firstChild) {
+                cardContainer.removeChild(cardContainer.firstChild);
+            }
 
             // Re-enable the "Next" button
-            document.getElementById('next-button').disabled = false;
+            skipBtn.disabled = false;
 
             // Change the "Restart" button back to the "Check Results" button
-            const checkResultsButton = document.getElementById('check-results-button');
-            checkResultsButton.textContent = 'Check Results';
-            checkResultsButton.onclick = checkResults;
+            checkBtn.textContent = 'Check Results';
+            checkBtn.onclick = checkResults;
+            checkBtn.disabled = true;
 
             // Hide the message box
-            document.getElementById('message-box').classList.add('hidden');
-            
+            messageBox.classList.add('hidden');
+
+            // Shuffle and update the cards
+            cardDeck = shuffle([...flashcards]);
             drawCard();
         }
         
@@ -313,8 +359,6 @@
                     }
                 });
 
-            const messageBox = document.getElementById('message-box');
-            const messageText = document.getElementById('message-text');
 
             
             if (allCorrect) {
@@ -325,7 +369,7 @@
             
             messageBox.classList.remove('hidden');
             
-            document.getElementById('next-button').disabled = true;
+            skipBtn.disabled = true
 
             // Change the "Check Results" button to a "Restart" button
             const checkResultsButton = document.getElementById('check-results-button');
@@ -372,8 +416,19 @@
             document.getElementById('message-box').classList.add('hidden');
         });
         
+        document.getElementById('check-results-button').onclick = checkResults;
+        
         cardDeck = shuffle(cardDeck);
         drawCard();
+        
+        Sortable.create(cardContainer, {
+            animation: 150,
+            ghostClass: 'placeholder',
+            onStart: updateCheckResultsButton,
+            onUpdate: updateCheckResultsButton,
+            onEnd: updateCheckResultsButton,
+        });
+        
     </script>
 </body>
 </html>
