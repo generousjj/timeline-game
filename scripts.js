@@ -19,7 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const isDark = new URLSearchParams(window.location.search).get('dark');
 
-
+let isCheckResultsCalled = false;
+let isDraggable = true;
 const deck = document.querySelector('.deck');
 const skipBtn = document.querySelector('.next-button');
 const cardArea = document.querySelector('.card-area');
@@ -119,28 +120,33 @@ card.addEventListener('touchstart', onCardDragStart);
 }
 
 function onCardDragStart(e) {
-e.preventDefault();
-
-const card = e.target;
-if (card.parentNode === deck) {
-draggedCard = card.cloneNode(true);
-setupCardEvents(draggedCard);
-cardArea.appendChild(draggedCard);
-card.style.visibility = 'hidden';
-placeholder.style.display = 'none';
-
-draggedCard.classList.add('dragged');
-const rect = card.getBoundingClientRect();
-const clientX = e.clientX || e.touches[0].clientX;
-const clientY = e.clientY || e.touches[0].clientY;
-draggedCard.style.left = `${clientX - rect.width / 2}px`;
-draggedCard.style.top = `${clientY - rect.height / 2}px`;
-
-document.addEventListener('mousemove', onMouseMove);
-document.addEventListener('touchmove', onMouseMove);
-document.addEventListener('mouseup', onMouseUp);
-document.addEventListener('touchend', onMouseUp);
-}
+  if (isCheckResultsCalled) {
+    console.log(isCheckResultsCalled)
+    sortableInstance.option("disabled", true);
+    return;
+  }
+  e.preventDefault();
+  
+  const card = e.target;
+  if (card.parentNode === deck) {
+  draggedCard = card.cloneNode(true);
+  setupCardEvents(draggedCard);
+  cardArea.appendChild(draggedCard);
+  card.style.visibility = 'hidden';
+  placeholder.style.display = 'none';
+  
+  draggedCard.classList.add('dragged');
+  const rect = card.getBoundingClientRect();
+  const clientX = e.clientX || e.touches[0].clientX;
+  const clientY = e.clientY || e.touches[0].clientY;
+  draggedCard.style.left = `${clientX - rect.width / 2}px`;
+  draggedCard.style.top = `${clientY - rect.height / 2}px`;
+  
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('touchmove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+  document.addEventListener('touchend', onMouseUp);
+  }
 }
 
 function onMouseMove(e) {
@@ -292,6 +298,8 @@ function hideMessageBox(duration) {
 
 
 function checkResults() {
+  isCheckResultsCalled = true;
+  sortableInstance.option("disabled", true);
   let prevDate = null;
   let allCorrect = true;
 
@@ -397,7 +405,7 @@ cardDeck = shuffle(cardDeck);
 drawCard();
 
 
-Sortable.create(cardContainer, {
+const sortableInstance = Sortable.create(cardContainer, {
   group: 'shared',
   animation: 150,
   ghostClass: 'sortable-ghost',
@@ -409,6 +417,7 @@ Sortable.create(cardContainer, {
   onAdd: updateCheckResultsButton,
   onUpdate: updateCheckResultsButton,
   onEnd: updateCheckResultsButton,
+  //disabled: !isDraggable,
 });
 
 // Hide the Skip button and card deck initially
