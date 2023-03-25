@@ -10,6 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (flashcardsParam) {
     loadGame(flashcardsParam);
+    placeholder.style.opacity = '1';
+    placeholder.style.color = '#00f';
+    placeholder.style.borderColor = '#00f';
+    placeholder.style.backgroundColor = '#b19cd9';
   }
 });
 
@@ -21,6 +25,10 @@ const skipBtn = document.querySelector('.next-button');
 const cardArea = document.querySelector('.card-area');
 const checkBtn = document.querySelector('.check-results-button');
 const placeholder = document.querySelector('.placeholder');
+placeholder.style.opacity = '0.3';
+placeholder.style.backgroundColor = 'lightgray';
+placeholder.style.color = 'gray';
+placeholder.style.borderColor = 'gray';
 const themeToggle = document.querySelector('.theme-toggle');
 const cardContainer = document.querySelector('.card-container');
 
@@ -454,6 +462,12 @@ async function loadGame(flashcardSetName) {
 }
 
 loadGameButton.addEventListener('click', async () => {
+
+  placeholder.style.opacity = '1';
+  placeholder.style.color = '#00f';
+  placeholder.style.borderColor = '#00f';
+  placeholder.style.backgroundColor = '#b19cd9';
+  
   const selectedSubject = subjectSelector.value;
   const newFlashcards = await loadFlashcards(selectedSubject);
 
