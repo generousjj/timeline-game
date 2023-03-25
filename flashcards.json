@@ -5,8 +5,32 @@
     { "name": "Event B", "date": 2022},
     { "name": "Event C", "date": 2023}
   ],
-  
+
   "apeuro": [
+    { "name": "Beginning of the Black Death ", "date": 1346},
+    { "name": "Printing Press ", "date": 1450},
+    { "name": "Fall of Constantinople ", "date": 1453},
+    { "name": "Reconquista; Columbus lands in the Americas ", "date": 1492},
+    { "name": "Martin Luther’s 95 Theses ", "date": 1517},
+    { "name": "Edict of Nantes ", "date": 1598},
+    { "name": "Outbreak of the 30 Years’ War ", "date": 1618},
+    { "name": "Beginning of the Long Parliament / English Civil War ", "date": 1640},
+    { "name": "Treaty of Westphalia ", "date": 1648},
+    { "name": "Glorious Revolution ", "date": 1688},
+    { "name": "Calling of the Estates General and beginning of the French Revolution ", "date": 1789},
+    { "name": "Defeat of Napoleon and Congress of Vienna ", "date": 1815},
+    { "name": "Revolutions in France, Prussia, Austria, and Italy (Revolutions of 1848) ", "date": 1848},
+    { "name": "Unification of Germany ", "date": 1871},
+    { "name": "Berlin Conference ", "date": 1884},
+    { "name": "Outbreak of World War I ", "date": 1914},
+    { "name": "Russian (Bolshevik) Revolution", "date": 1917},
+    { "name": "Paris Peace Conference / Treaty of Versailles ", "date": 1919},
+    { "name": "1945 - World War II ", "date": 1939},
+    { "name": "Breakup of the Soviet Union ", "date": 1991},
+    { "name": "Maastricht Treaty creates the European Union ", "date": 1992}
+  ],
+  
+  "apeuro-extended": [
     { "name": "Beginning of the Black Death", "date": 1346},
     { "name": "Printing Press", "date": 1450},
     { "name": "Fall of Constantinople", "date": 1453},
