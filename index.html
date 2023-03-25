@@ -299,29 +299,35 @@
       }
     }
 
-    function setupCardEvents(card) {
-      card.addEventListener('mousedown', (e) => {
-        e.preventDefault();
+function setupCardEvents(card) {
+  card.addEventListener('mousedown', onCardDragStart);
+  card.addEventListener('touchstart', onCardDragStart);
+}
 
-        if (card.parentNode === deck) {
-          draggedCard = card.cloneNode(true);
-          setupCardEvents(draggedCard);
-          cardArea.appendChild(draggedCard);
-          card.style.visibility = 'hidden';
-          placeholder.style.display = 'none';
+function onCardDragStart(e) {
+  e.preventDefault();
 
-          draggedCard.classList.add('dragged');
-          draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
-          draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
+  const card = e.target;
+  if (card.parentNode === deck) {
+    draggedCard = card.cloneNode(true);
+    setupCardEvents(draggedCard);
+    cardArea.appendChild(draggedCard);
+    card.style.visibility = 'hidden';
+    placeholder.style.display = 'none';
 
-          document.addEventListener('mousemove', onMouseMove);
-          document.addEventListener('mouseup', onMouseUp);
-        }
-      });
+    draggedCard.classList.add('dragged');
+    const rect = card.getBoundingClientRect();
+    const clientX = e.clientX || e.touches[0].clientX;
+    const clientY = e.clientY || e.touches[0].clientY;
+    draggedCard.style.left = `${clientX - rect.width / 2}px`;
+    draggedCard.style.top = `${clientY - rect.height / 2}px`;
 
-      console.log(document.getElementById('check-results-button').textContent)
-
-    }
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('touchmove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('touchend', onMouseUp);
+  }
+}
 
     function onMouseMove(e) {
       e.preventDefault();
@@ -329,13 +335,15 @@
         return;
       }
     
-      draggedCard.style.left = `${e.clientX - draggedCard.offsetWidth / 2}px`;
-      draggedCard.style.top = `${e.clientY - draggedCard.offsetHeight / 2}px`;
-
+      const clientX = e.clientX || e.touches[0].clientX;
+      const clientY = e.clientY || e.touches[0].clientY;
+      draggedCard.style.left = `${clientX - draggedCard.offsetWidth / 2}px`;
+      draggedCard.style.top = `${clientY - draggedCard.offsetHeight / 2}px`;
+    
       const cardContainerRect = cardContainer.getBoundingClientRect();
       const cardRect = draggedCard.getBoundingClientRect();
-      const y = e.clientY;
-
+      const y = clientY;
+    
       if (y < cardContainerRect.top || y > cardContainerRect.bottom) {
         return;
       }
@@ -368,8 +376,10 @@
 
       if (draggedCard) {
         const deckRect = deck.getBoundingClientRect();
-        const isOverDeck = e.clientX >= deckRect.left && e.clientX <= deckRect.right &&
-          e.clientY >= deckRect.top && e.clientY <= deckRect.bottom;
+        const clientX = e.clientX || e.changedTouches[0].clientX;
+        const clientY = e.clientY || e.changedTouches[0].clientY;
+        const isOverDeck = clientX >= deckRect.left && clientX <= deckRect.right &&
+          clientY >= deckRect.top && clientY <= deckRect.bottom;
         
         if (isOverDeck) {
           const topCard = document.querySelector('.top-card');
@@ -388,7 +398,12 @@
           draggedCard.style.left = '';
           draggedCard.style.top = '';
           draggedCard.classList.remove('dragged');
-
+      
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('touchmove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+          document.removeEventListener('touchend', onMouseUp);
+          
           placeholder.style.height = '';
 
           if (draggedCard.parentNode === deck) {
