@@ -41,6 +41,35 @@
     <span id="message-text"></span>
     <button id="message-close" class="message-close">&times;</button>
   </div>
+  <div id="popup" class="popup hidden">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h2 class="popup-title">Results</h2>
+        <span class="popup-close" onclick="closePopup()">&times;</span>
+      </div>
+      <div class="popup-content">
+        <p id="accuracy-text">Accuracy: </p>
+        <div class="popup-results">
+          <!-- Your results will be displayed here -->
+        </div>
+        
+        <input type="checkbox" id="title1" name="contentbox" />
+        <div class="copyContent">
+        
+        <div class="tooltip">
+        	<div class="whitepaper" id="whitepaper" onclick="myCopy(event)">
+        		 <span class="tooltiptext">Copy link 1 to clipboard</span>Copy</div>
+        		</div>
+        	 <input type="text" value="VALUE HERE" id="myInput">
+        	</div>
+        </div>
+      
+        <div class="button-holder">
+          <button id="restart-button" class="restart-button">Restart</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
