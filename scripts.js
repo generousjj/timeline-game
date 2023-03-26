@@ -395,7 +395,7 @@ function checkResults() {
         card.prepend(eventDate);
       }
 
-      results.push(`${isCorrect ? 'CORRECT' : 'INCORRECT'} -- ${card.dataset.date}: ${card.textContent.replace(/[0-9]/g, '')}`);
+      results.push(`${isCorrect ? 'CORRECT' : 'INCORRECT'} -- ${card.dataset.date}: ${card.textContent.replace(card.dataset.date, '')}`);
     });
 
   // Calculate the accuracy percentage
