@@ -12,6 +12,51 @@
 
 <body>
 
+  
+  <div id="instructions-popup" class="popup hidden">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h2 class="popup-title">🤔 How to Play</h2>
+        <span class="popup-close" onclick="closeInstructionsPopup()">&times;</span>
+      </div>
+      <div class="popup-content">
+        <p>1. Choose a subject from the dropdown menu and click "Load Game".</p>
+        <p>2. Cards with events will appear on the left side of the screen.</p>
+        <p>3. Drag and drop the cards in the correct chronological order on the right side of the screen.</p>
+        <p>4. If you're unsure of an event's date, you can click "Skip" to move to the next card.</p>
+        <p>5. When you're done, click "Check Results" to see your accuracy and get detailed results.</p>
+        <center>
+          <p>👥: Credits</p>
+          <p>🌙: Toggle dark mode</p>
+          <p>📚: Select new subject</p>
+        </center>
+      </div>
+    </div>
+  </div>
+
+  <div id="credits-popup" class="popup hidden">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h2 class="popup-title">Credits</h2>
+        <span class="popup-close" onclick="closeCreditsPopup()">&times;</span>
+      </div>
+      <div class="popup-content">
+        <p><strong>Deck Creators:</strong></p>
+        <ul>
+          <li>Brittany Berriz - AP Euro</li>
+          <li>Sierra Hall - APUSH (key dates)</li>
+          <li>Austin Kim - APUSH (extended)</li>
+        </ul>
+        <p><strong>Site Developers:</strong></p>
+        <ul>
+          <li>GPT-4 - frontend, backend</li>
+          <li>Jude St John - ideation, debugging</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  
   <div class="container">
     <div class="subject-selector" id="subject-selector">
       <label for="subject">Choose a subject:</label>
@@ -35,6 +80,8 @@
     </div>
   </div>
   <button id="check-results-button" class="check-results-button" onclick=checkResults() disabled>Check Results</button>
+  <span class="how-to" onclick=howTo()>🤔</span>
+  <span class="credits" onclick=credits()>👥</span>
   <span class="theme-toggle">🌙</span>
   <span class="subject-toggle" onclick=newSubject()>📚</span>
   <div id="message-box" class="message-box hidden">
@@ -48,7 +95,6 @@
         <span class="popup-close" onclick="closePopup()">&times;</span>
       </div>
       <div class="popup-content">
-        <p id="accuracy-text">Accuracy: </p>
         <div class="popup-results">
           <!-- Your results will be displayed here -->
         </div>
