@@ -64,8 +64,6 @@ let cardDeck = [...flashcards];
 let hasInteracted = false;
 
 function shuffle(array) {
-
-  console.log(document.getElementById('check-results-button').textContent)
   
   let currentIndex = array.length, temporaryValue, randomIndex;
 
@@ -105,7 +103,6 @@ function drawCard() {
   if (existingTopCard) {
     deck.removeChild(existingTopCard);
   }
-  console.log(document.getElementById('check-results-button').textContent)
 }
 
 function updateCheckResultsButton() {
@@ -124,7 +121,6 @@ card.addEventListener('touchstart', onCardDragStart);
 
 function onCardDragStart(e) {
   if (isCheckResultsCalled) {
-    console.log(isCheckResultsCalled)
     sortableInstance.option("disabled", true);
     return;
   }
@@ -297,21 +293,60 @@ function hideMessageBox(duration) {
 }
 
 
+function getFlashcardCount(listName, callback) {
+  // Fetch the JSON file
+  fetch('flashcards.json')
+    .then(response => {
+      // Check if the response is successful
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      // Parse the JSON file
+      return response.json();
+    })
+    .then(flashcardsData => {
+      // Get the number of flashcards for the given listName
+      const flashcardCount = flashcardsData[listName]?.length || 0;
+
+      // Return the flashcard count using the callback
+      callback(null, flashcardCount);
+    })
+    .catch(error => {
+      console.error(error);
+      callback(error, 0);
+    });
+}
 
 
 function updatePopup(accuracy, results) {
   // Get the popup elements
   const popup = document.getElementById("popup");
-  const accuracyDiv = document.getElementById("accuracy-text");
   const resultsDiv = document.querySelector(".popup-results");
 
-  // Update content
-  accuracyDiv.textContent = `Accuracy: ${accuracy.toFixed(2)}%`;
-  resultsDiv.innerHTML = results.join('<br>');
+  const urlParams = new URLSearchParams(window.location.search);
+  const flashSet = urlParams.get('flashcards');
 
-  // Display the popup
-  popup.classList.remove("hidden");
+  // Calculate the number of cards played and the total cards
+  const cardsPlayed = results.length;
+
+  // Get the flashcard count using the callback
+  getFlashcardCount(flashSet, (error, flashcardCount) => {
+    if (error) {
+      console.error("Failed to get flashcard count:", error);
+    } else {
+      // Update the results
+      const accuracyText = `Accuracy: ${accuracy.toFixed(2)}%`;
+      const cardsPlayedText = `${cardsPlayed}/${flashcardCount} cards played`;
+      resultsDiv.innerHTML = [accuracyText, cardsPlayedText, ...results].join('<br>');
+
+      // Display the popup
+      popup.classList.remove("hidden");
+    }
+  });
 }
+
+
+
 
 
 function checkResults() {
@@ -319,10 +354,6 @@ function checkResults() {
   whitepaper.style.pointerEvents = 'auto';
   whitepaper.style.cursor = 'pointer';
   whitepaper.textContent = "Copy";
-
-  console.log(whitepaper.classList);
-  console.log(whitepaper.textContent);
-  console.log(whitepaper.style.pointerEvent);
 
   
   if (whitepaper.classList.contains('copied')) {
@@ -402,7 +433,8 @@ function myCopy(event) {
       results.push(`${isCorrect ? 'CORRECT' : 'INCORRECT'} -- ${card.dataset.date}: ${card.textContent.replace(/[0-9]/g, '')}`);
     });
   
-  var copyText = results//event.target.parentNode.nextSibling.nextSibling.value
+  var copyText = document.querySelector(".popup-results").innerHTML.replace(new RegExp('<br>', 'g'), "\n");
+//results//event.target.parentNode.nextSibling.nextSibling.value
 
    /* Copy the text inside the text field */
   parent.navigator.clipboard.writeText(copyText);
@@ -466,6 +498,26 @@ function closePopup() {
   popupDiv.classList.add('hidden');
 }
 
+function howTo() {
+  const instructionsPopup = document.getElementById('instructions-popup');
+  instructionsPopup.classList.remove('hidden');
+}
+
+function closeInstructionsPopup() {
+  const instructionsPopup = document.getElementById('instructions-popup');
+  instructionsPopup.classList.add('hidden');
+}
+
+function credits() {
+  const creditsPopup = document.getElementById('credits-popup');
+  creditsPopup.classList.remove('hidden');
+}
+
+function closeCreditsPopup() {
+  const creditsPopup = document.getElementById('credits-popup');
+  creditsPopup.classList.add('hidden');
+}
+
 document.getElementById('message-close').addEventListener('click', () => {
   closePopup();
 });
@@ -516,7 +568,6 @@ async function loadGame(flashcardSetName) {
   const params = new URLSearchParams(window.location.search);
   if (!params.has('flashcards')) {
     let stateObj = { id: "100" };
-    console.log(window.location.href);
     window.history.pushState(stateObj,
         "Page", window.location.href+"&flashcards="+selectedSubject);
   }
@@ -558,7 +609,6 @@ loadGameButton.addEventListener('click', async () => {
   const params = new URLSearchParams(window.location.search);
   if (!params.has('flashcards')) {
     let stateObj = { id: "100" };
-    console.log(window.location.href);
     window.history.pushState(stateObj,
         "Page", window.location.href+"&flashcards="+selectedSubject);
   }
