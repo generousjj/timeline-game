@@ -19,6 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const isDark = new URLSearchParams(window.location.search).get('dark');
 
+const whitepaper = document.getElementById('whitepaper');
+const popupDiv = document.getElementById('popup');
+const popupResultsDiv = document.getElementById('popup-results');
 let isCheckResultsCalled = false;
 let isDraggable = true;
 const deck = document.querySelector('.deck');
@@ -296,23 +299,60 @@ function hideMessageBox(duration) {
 
 
 
+function updatePopup(accuracy, results) {
+  // Get the popup elements
+  const popup = document.getElementById("popup");
+  const accuracyDiv = document.getElementById("accuracy-text");
+  const resultsDiv = document.querySelector(".popup-results");
+
+  // Update content
+  accuracyDiv.textContent = `Accuracy: ${accuracy.toFixed(2)}%`;
+  resultsDiv.innerHTML = results.join('<br>');
+
+  // Display the popup
+  popup.classList.remove("hidden");
+}
+
 
 function checkResults() {
+
+  whitepaper.style.pointerEvents = 'auto';
+  whitepaper.style.cursor = 'pointer';
+  whitepaper.textContent = "Copy";
+
+  console.log(whitepaper.classList);
+  console.log(whitepaper.textContent);
+  console.log(whitepaper.style.pointerEvent);
+
+  
+  if (whitepaper.classList.contains('copied')) {
+    whitepaper.classList.remove('copied');
+  }
+  
   isCheckResultsCalled = true;
   sortableInstance.option("disabled", true);
   let prevDate = null;
   let allCorrect = true;
+  let correctCount = 0;
+  let totalCount = 0;
+  skipBtn.disabled = true;
+
 
   if (deck.querySelector('.top-card')) {
     deck.querySelector('.top-card').style.backgroundColor = 'rgba(192, 192, 192, 0.5)';
   }
 
+  const results = [];
   Array.from(cardContainer.children)
     .filter(child => child.classList.contains('card'))
     .forEach((card, index) => {
+      totalCount++;
       const cardDate = Number(card.dataset.date);
       const isCorrect = prevDate === null || prevDate <= cardDate;
       allCorrect = allCorrect && isCorrect;
+      if (isCorrect) {
+        correctCount++;
+      }
       card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
       prevDate = cardDate;
       card.draggable = false;
@@ -323,36 +363,56 @@ function checkResults() {
         eventDate.textContent = Math.floor(card.dataset.date);
         card.prepend(eventDate);
       }
+
+      results.push(`${isCorrect ? 'CORRECT' : 'INCORRECT'} -- ${card.dataset.date}: ${card.textContent.replace(/[0-9]/g, '')}`);
     });
 
+  // Calculate the accuracy percentage
+  const accuracy = (correctCount / totalCount) * 100;
 
+  
+  
+  // Show the popup with accuracy and results
+  updatePopup(accuracy, results);
+}
 
-  //const resultText = document.getElementById('check-results-button').textContent;
+function myCopy(event) {
+  let prevDate = null;
+  let allCorrect = true;
+  let correctCount = 0;
+  let totalCount = 0;
+  skipBtn.disabled = true;
 
-  if (allCorrect && cardContainer.children.length > 0) {
-    messageText.textContent = ("Congratulations! You've successfully ordered the events.");
-  } else if (cardContainer.children.length > 0) {
-    messageText.textContent = ("Some events are not in the correct order. Please try again.");
-    skipBtn.disabled = true;
-  } else {
-      const checkResultsButton = document.getElementById('check-results-button');
-      checkResultsButton.disabled = false;
-      checkResultsButton.textContent = 'Restart';
-      checkResultsButton.onclick = restart;
-      messageBox.classList.add('hidden');
-      return;
-  }
+  const results = [];
+  Array.from(cardContainer.children)
+    .filter(child => child.classList.contains('card'))
+    .forEach((card, index) => {
+      const cardDate = Number(card.dataset.date);
+      const isCorrect = prevDate === null || prevDate <= cardDate;
+      allCorrect = allCorrect && isCorrect;
+      prevDate = cardDate;
 
-  messageBox.classList.remove('hidden');      
+      if (!card.querySelector('.event-date')) {
+        const eventDate = document.createElement('div');
+        eventDate.classList.add('event-date');
+        eventDate.textContent = Math.floor(card.dataset.date);
+        card.prepend(eventDate);
+      }
 
-  const checkResultsButton = document.getElementById('check-results-button');
-  checkResultsButton.disabled = false;
-  checkResultsButton.textContent = 'Restart';
-  checkResultsButton.onclick = restart;
+      results.push(`${isCorrect ? 'CORRECT' : 'INCORRECT'} -- ${card.dataset.date}: ${card.textContent.replace(/[0-9]/g, '')}`);
+    });
+  
+  var copyText = results//event.target.parentNode.nextSibling.nextSibling.value
 
-  messageBox.classList.remove('hidden');
-  hideMessageBox(1500);
-  console.log(document.getElementById('check-results-button').textContent)
+   /* Copy the text inside the text field */
+  parent.navigator.clipboard.writeText(copyText);
+
+  //let copyText = document.querySelector("#input");
+
+  //alert("Copied results");
+  whitepaper.classList.add('copied');
+  whitepaper.textContent = "Copied";
+  whitepaper.style.pointerEvents = 'none';
 }
 
 function toggleDarkMode() {
@@ -364,9 +424,16 @@ function toggleDarkMode() {
   subjectDiv.classList.toggle('dark-mode', isDarkMode);
   cardArea.classList.toggle('dark-mode', isDarkMode);
   messageBox.classList.toggle('dark-mode', isDarkMode);
+  popupDiv.classList.toggle('dark-mode', isDarkMode);
+  popupResultsDiv.classList.toggle('dark-mode', isDarkMode);
+
+  // Add or remove the 'dark-mode' class for popup and popup-results
+  document.getElementById('popup').classList.toggle('dark-mode', isDarkMode);
+  document.getElementById('popup-results').classList.toggle('dark-mode', isDarkMode);
 
   themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
 }
+
 
 
 skipBtn.addEventListener('click', () => {
@@ -395,8 +462,16 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
+function closePopup() {
+  popupDiv.classList.add('hidden');
+}
+
 document.getElementById('message-close').addEventListener('click', () => {
-  document.getElementById('message-box').classList.add('hidden');
+  closePopup();
+});
+
+document.getElementById('restart-button').addEventListener('click', () => {
+  restart()
 });
 
 document.getElementById('check-results-button').onclick = checkResults;
