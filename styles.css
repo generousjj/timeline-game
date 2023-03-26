@@ -103,7 +103,7 @@ body {
   background-color: #b19cd9;
 }
 
-.theme-toggle {
+.how-to {
   position: fixed;
   top: 10px;
   left: 10px;
@@ -111,7 +111,7 @@ body {
   cursor: pointer;
 }
 
-.subject-toggle {
+.credits {
   position: fixed;
   top: 60px;
   left: 10px;
@@ -119,9 +119,26 @@ body {
   cursor: pointer;
 }
 
+
+.theme-toggle {
+  position: fixed;
+  top: 110px;
+  left: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.subject-toggle {
+  position: fixed;
+  top: 160px;
+  left: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
 .check-results-button {
   position: fixed;
-  bottom: 10px;
+  bottom: 160px;
   left: 10px;
 }
 
