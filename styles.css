@@ -212,6 +212,143 @@ body.dark-mode {
   border: 3px solid #cbece5;
 }
 
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(50, 50, 50, 0.5);
+  z-index: 9999;
+}
+
+.popup-hidden {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  z-index: 1000;
+  max-width: 80%;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  display: none; /* initially hidden */
+}
+
+.popup-box {
+  /*white-space: pre-wrap;*/
+  padding: 10px;
+  background-color: lightblue;
+  border-radius: 5px;
+  overflow-wrap: break-word;
+  justify-content:center;
+  color:black;
+}
+
+/* Dark mode support for the popup */
+body.dark-mode .popup {
+  background-color: rgba(50, 50, 50, 0.5);
+  /*color: #f1f1f1;*/
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  align: center;
+}
+
+.popup-title {
+  font-size: 24px;
+  margin: 0;
+  text-align: center;
+}
+
+.popup-close {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.popup-content {
+  font-size: 16px;
+}
+
+.popup-results {
+  white-space: pre-wrap;
+  font-family: monospace;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  overflow-wrap: break-word;
+}
+
+/* Dark mode support for the results area */
+body.dark-mode .popup-results {
+  background-color: #2b2b2b;
+  color: #fff;
+}
+
+.button-holder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-top:10px;
+}
+
+
+input {
+  display: none;
+}
+.whitepaper {
+cursor: pointer;
+text-align: center;
+background-color: white;
+border: 2px solid black;
+border-radius: 3px;
+float: left;
+margin: 5px 5px 5px 0;
+height: 100%;
+width: 100%;
+padding: 2px;
+}
+
+.whitepaper.copied {
+  background-color: lightgray;
+  color: gray;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
 
 .hidden {
   display: none;
