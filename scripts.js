@@ -346,7 +346,14 @@ function updatePopup(accuracy, results) {
 }
 
 
-
+function isOrderBackwards(cards) {
+  for (let i = 1; i < cards.length; i++) {
+    if (Number(cards[i - 1].dataset.date) <= Number(cards[i].dataset.date)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 
 function checkResults() {
@@ -369,6 +376,9 @@ function checkResults() {
   const cards = Array.from(cardContainer.children).filter((child) =>
     child.classList.contains("card")
   );
+
+
+  const orderBackwards = isOrderBackwards(cards);
 
   let n = cards.length;
   const dp = new Array(n).fill(1);
@@ -393,8 +403,12 @@ function checkResults() {
 
   const results = [];
   cards.forEach((card, index) => {
-    const isCorrect = correctIndices.has(index);
-    card.style.backgroundColor = isCorrect ? "rgba(0, 255, 0, 0.3)" : "rgba(255, 0, 0, 0.3)";
+    const isCorrect = correctIndices.has(index) || orderBackwards;
+    card.style.backgroundColor = orderBackwards
+      ? "rgba(255, 255, 0, 0.3)"
+      : isCorrect
+      ? "rgba(0, 255, 0, 0.3)"
+      : "rgba(255, 0, 0, 0.3)";
     card.draggable = false;
 
     if (!card.querySelector(".event-date")) {
@@ -404,16 +418,23 @@ function checkResults() {
       card.prepend(eventDate);
     }
 
-    results.push(`${isCorrect ? "CORRECT" : "INCORRECT"} -- ${card.dataset.date}: ${card.textContent.replace(card.dataset.date, "")}`);
+    results.push(
+      `${isCorrect ? "CORRECT" : "INCORRECT"} -- ${
+        card.dataset.date
+      }: ${card.textContent.replace(card.dataset.date, "")}`
+    );
   });
 
   // Calculate the accuracy percentage
-  const accuracy = (correctIndices.size / n) * 100;
+  const accuracy = orderBackwards ? 100 : (correctIndices.size / n) * 100;
 
   // Show the popup with accuracy and results
-  updatePopup(accuracy, results);
+  if (orderBackwards) {
+    updatePopup(accuracy, ["ALL CARDS ORDERED BACKWARDS"]);
+  } else {
+    updatePopup(accuracy, results);
+  }
 }
-
 
 function myCopy(event) {
   let prevDate = null;
