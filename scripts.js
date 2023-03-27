@@ -318,16 +318,25 @@ function getFlashcardCount(listName, callback) {
 }
 
 
-function updatePopup(accuracy, results) {
+function updatePopup(accuracy, results, cards) {
+
+  const orderBackwards = isOrderBackwards(cards);
+  
   // Get the popup elements
   const popup = document.getElementById("popup");
   const resultsDiv = document.querySelector(".popup-results");
 
   const urlParams = new URLSearchParams(window.location.search);
   const flashSet = urlParams.get('flashcards');
+  const cardsPlayed=results.length;
+  
+  if (orderBackwards) {
+    results.length = 0;
+    results.push(["ALL CARDS ORDERED BACKWARDS"]);
+  }
 
   // Calculate the number of cards played and the total cards
-  const cardsPlayed = results.length;
+  
 
   // Get the flashcard count using the callback
   getFlashcardCount(flashSet, (error, flashcardCount) => {
@@ -425,15 +434,13 @@ function checkResults() {
     );
   });
 
+  
   // Calculate the accuracy percentage
   const accuracy = orderBackwards ? 100 : (correctIndices.size / n) * 100;
 
+  
   // Show the popup with accuracy and results
-  if (orderBackwards) {
-    updatePopup(accuracy, ["ALL CARDS ORDERED BACKWARDS"]);
-  } else {
-    updatePopup(accuracy, results);
-  }
+  updatePopup(accuracy, results, cards);
 }
 
 function myCopy(event) {
