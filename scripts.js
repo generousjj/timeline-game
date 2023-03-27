@@ -350,62 +350,70 @@ function updatePopup(accuracy, results) {
 
 
 function checkResults() {
-
-  whitepaper.style.pointerEvents = 'auto';
-  whitepaper.style.cursor = 'pointer';
+  whitepaper.style.pointerEvents = "auto";
+  whitepaper.style.cursor = "pointer";
   whitepaper.textContent = "Copy";
 
-  
-  if (whitepaper.classList.contains('copied')) {
-    whitepaper.classList.remove('copied');
+  if (whitepaper.classList.contains("copied")) {
+    whitepaper.classList.remove("copied");
   }
-  
+
   isCheckResultsCalled = true;
   sortableInstance.option("disabled", true);
-  let prevDate = null;
-  let allCorrect = true;
-  let correctCount = 0;
-  let totalCount = 0;
   skipBtn.disabled = true;
 
+  if (deck.querySelector(".top-card")) {
+    deck.querySelector(".top-card").style.backgroundColor = "rgba(192, 192, 192, 0.5)";
+  }
 
-  if (deck.querySelector('.top-card')) {
-    deck.querySelector('.top-card').style.backgroundColor = 'rgba(192, 192, 192, 0.5)';
+  const cards = Array.from(cardContainer.children).filter((child) =>
+    child.classList.contains("card")
+  );
+
+  let n = cards.length;
+  const dp = new Array(n).fill(1);
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (Number(cards[j].dataset.date) <= Number(cards[i].dataset.date)) {
+        dp[i] = Math.max(dp[i], dp[j] + 1);
+      }
+    }
+  }
+
+  let maxCorrect = Math.max(...dp);
+  const correctIndices = new Set();
+
+  for (let i = n - 1; i >= 0 && maxCorrect > 0; i--) {
+    if (dp[i] === maxCorrect) {
+      correctIndices.add(i);
+      maxCorrect--;
+    }
   }
 
   const results = [];
-  Array.from(cardContainer.children)
-    .filter(child => child.classList.contains('card'))
-    .forEach((card, index) => {
-      totalCount++;
-      const cardDate = Number(card.dataset.date);
-      const isCorrect = prevDate === null || prevDate <= cardDate;
-      allCorrect = allCorrect && isCorrect;
-      if (isCorrect) {
-        correctCount++;
-      }
-      card.style.backgroundColor = isCorrect ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
-      prevDate = cardDate;
-      card.draggable = false;
+  cards.forEach((card, index) => {
+    const isCorrect = correctIndices.has(index);
+    card.style.backgroundColor = isCorrect ? "rgba(0, 255, 0, 0.3)" : "rgba(255, 0, 0, 0.3)";
+    card.draggable = false;
 
-      if (!card.querySelector('.event-date')) {
-        const eventDate = document.createElement('div');
-        eventDate.classList.add('event-date');
-        eventDate.textContent = Math.floor(card.dataset.date);
-        card.prepend(eventDate);
-      }
+    if (!card.querySelector(".event-date")) {
+      const eventDate = document.createElement("div");
+      eventDate.classList.add("event-date");
+      eventDate.textContent = Math.floor(card.dataset.date);
+      card.prepend(eventDate);
+    }
 
-      results.push(`${isCorrect ? 'CORRECT' : 'INCORRECT'} -- ${card.dataset.date}: ${card.textContent.replace(card.dataset.date, '')}`);
-    });
+    results.push(`${isCorrect ? "CORRECT" : "INCORRECT"} -- ${card.dataset.date}: ${card.textContent.replace(card.dataset.date, "")}`);
+  });
 
   // Calculate the accuracy percentage
-  const accuracy = (correctCount / totalCount) * 100;
+  const accuracy = (correctIndices.size / n) * 100;
 
-  
-  
   // Show the popup with accuracy and results
   updatePopup(accuracy, results);
 }
+
 
 function myCopy(event) {
   let prevDate = null;
