@@ -526,6 +526,22 @@ function closeCreditsPopup() {
   creditsPopup.classList.add('hidden');
 }
 
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    const popupDiv = document.getElementById('popup');
+    const instructionsPopup = document.getElementById('instructions-popup');
+    const creditsPopup = document.getElementById('credits-popup');
+
+    if (!popupDiv.classList.contains('hidden')) {
+      closePopup();
+    } else if (!instructionsPopup.classList.contains('hidden')) {
+      closeInstructionsPopup();
+    } else if (!creditsPopup.classList.contains('hidden')) {
+      closeCreditsPopup();
+    }
+  }
+});
+
 document.getElementById('message-close').addEventListener('click', () => {
   closePopup();
 });
