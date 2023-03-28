@@ -618,6 +618,10 @@ subjectSelector.addEventListener('change', () => {
 });
 
 async function loadGame(flashcardSetName) {
+  gtag('event', 'game_load', {
+    'subject': flashcardSetName,
+  });
+  
   const selectedSubject = flashcardSetName;
   const newFlashcards = await loadFlashcards(selectedSubject);
 
