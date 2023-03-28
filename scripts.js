@@ -485,19 +485,24 @@ function myCopy(event) {
 
 function toggleDarkMode() {
   isDarkMode = !isDarkMode;
+  
+  let url = new URL(window.location.href);
+  let darktext= isDarkMode ? "enabled" : "disabled"
+  url.searchParams.set('dark', darktext);
+  window.history.replaceState({}, '', url);
 
   // Add or remove the 'dark-mode' class for each element
   document.body.classList.toggle('dark-mode', isDarkMode);
   deck.classList.toggle('dark-mode', isDarkMode);
   subjectDiv.classList.toggle('dark-mode', isDarkMode);
   cardArea.classList.toggle('dark-mode', isDarkMode);
-  messageBox.classList.toggle('dark-mode', isDarkMode);
+  //messageBox.classList.toggle('dark-mode', isDarkMode);
   popupDiv.classList.toggle('dark-mode', isDarkMode);
-  popupResultsDiv.classList.toggle('dark-mode', isDarkMode);
+  //popupResultsDiv.classList.toggle('dark-mode', isDarkMode);
 
   // Add or remove the 'dark-mode' class for popup and popup-results
   document.getElementById('popup').classList.toggle('dark-mode', isDarkMode);
-  document.getElementById('popup-results').classList.toggle('dark-mode', isDarkMode);
+  //document.getElementById('popup-results').classList.toggle('dark-mode', isDarkMode);
 
   themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
 }
