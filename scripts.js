@@ -9,32 +9,106 @@ document.addEventListener("DOMContentLoaded", () => {
   const flashcardsParam = urlSearchParams.get("flashcards");
 
   if (flashcardsParam) {
-    loadGame(flashcardsParam);
+    // Reset all game state variables
+    currentCardIndex = 0;
+    cardDeck = [];
+    skippedCards = [];
+    playedCards.clear();
+    currentCardId = null;
+    hasInteracted = false;
+    isCheckResultsCalled = false;
+    hasShownResults = false;
+    
+    // Clear any existing cards in the timeline
+    const cardContainer = document.querySelector('.card-container');
+    if (cardContainer) {
+      cardContainer.innerHTML = '';
+    }
+    
+    // Reset placeholder
     placeholder.style.opacity = '1';
-    placeholder.style.color = '#00f';
-    placeholder.style.borderColor = '#00f';
-    placeholder.style.backgroundColor = '#b19cd9';
+    placeholder.style.color = '#3b82f6';
+    placeholder.style.borderColor = '#3b82f6';
+    placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
+    
+    // Reset UI elements to initial state
+    const subjectDiv = document.getElementById('subject-selector');
+    const subjectSelector = document.getElementById('subject');
+    const loadGameButton = document.getElementById('load-game-button');
+    
+    if (subjectDiv) subjectDiv.style.display = 'flex';
+    if (subjectSelector) subjectSelector.disabled = false;
+    if (loadGameButton) loadGameButton.disabled = true;
+    
+    // Hide game elements initially
+    if (skipBtn) skipBtn.style.display = 'none';
+    if (deck) deck.style.display = 'none';
+    if (cardArea) cardArea.style.display = 'none';
+    
+    // Load the game
+    loadGame(flashcardsParam);
   }
 });
 
-const isDark = new URLSearchParams(window.location.search).get('dark');
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.interface-button').forEach(btn => {
+    btn.style.display = 'flex';
+  });
+});
+
+// Theme preference system using localStorage
+const THEME_KEY = 'timetango-theme';
+
+// Get saved theme preference or default to 'light'
+function getSavedTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) || 'light';
+  } catch (e) {
+    console.warn('localStorage not available, using default theme');
+    return 'light';
+  }
+}
+
+// Save theme preference
+function saveTheme(theme) {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch (e) {
+    console.warn('localStorage not available, theme preference not saved');
+  }
+}
+
+// Apply theme on page load
+function applySavedTheme() {
+  const savedTheme = getSavedTheme();
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    isDarkMode = true;
+  } else {
+    document.body.classList.remove('dark-mode');
+    isDarkMode = false;
+  }
+}
 
 const whitepaper = document.getElementById('whitepaper');
 const popupDiv = document.getElementById('popup');
 const popupResultsDiv = document.getElementById('popup-results');
 let isCheckResultsCalled = false;
 let isDraggable = true;
+let hasShownResults = false; // Track if results have been shown and not resumed
 const deck = document.querySelector('.deck');
 const skipBtn = document.querySelector('.next-button');
 const cardArea = document.querySelector('.card-area');
 const checkBtn = document.querySelector('.check-results-button');
 const placeholder = document.querySelector('.placeholder');
 placeholder.style.opacity = '0.3';
-placeholder.style.backgroundColor = 'lightgray';
-placeholder.style.color = 'gray';
-placeholder.style.borderColor = 'gray';
+placeholder.style.backgroundColor = '#f3f4f6';
+placeholder.style.color = '#9ca3af';
+placeholder.style.borderColor = '#d1d5db';
 const themeToggle = document.querySelector('.theme-toggle');
 const cardContainer = document.querySelector('.card-container');
+
+
 
 const flashcards = [
   {name: 'Event 1', date: 1900},
@@ -46,15 +120,8 @@ const flashcards = [
 let isDarkMode;
 
 document.addEventListener('DOMContentLoaded', (event) => {
-  if (isDark === 'enabled') {
-    toggleDarkMode();
-  }
-  else if (isDark !== 'disabled') {
-
-    const currentPage = window.location.pathname;
-    window.history.pushState({ id: "100" }, "Page", `${currentPage}?dark=disabled`);
-
-  }
+  // Apply saved theme preference
+  applySavedTheme();
 });
 
 
@@ -62,6 +129,19 @@ let draggedCard = null;
 let currentCardIndex = 0;
 let cardDeck = [...flashcards];
 let hasInteracted = false;
+let skippedCards = []; // Track skipped cards for back functionality
+let playedCards = new Set(); // Track cards that have been placed in timeline
+let currentCardId = null; // Track the currently displayed card ID
+
+// Creator attribution mapping
+const creatorMapping = {
+  'test': 'Jude St John',
+  'apeuro': 'Brittany Berriz',
+  'apeuro-extended': 'Brittany Berriz',
+  'apush': 'Sierra Hall',
+  'apush-extended': 'Austin Kim',
+  'apwh': 'Fiveable'
+};
 
 function shuffle(array) {
   
@@ -79,6 +159,21 @@ function shuffle(array) {
   return array;
 }
 
+// Helper function to check if a card is available to be drawn
+function isCardAvailable(cardId) {
+  return cardId !== currentCardId && !playedCards.has(cardId);
+}
+
+// Helper function to find the next available card index
+function findNextAvailableCard(startIndex) {
+  for (let i = startIndex; i < cardDeck.length; i++) {
+    if (isCardAvailable(cardDeck[i].id)) {
+      return i;
+    }
+  }
+  return -1; // No available cards found
+}
+
 function drawCard() {
   if (currentCardIndex >= cardDeck.length) {
     skipBtn.disabled = true;
@@ -86,31 +181,83 @@ function drawCard() {
     return;
   }
 
-  const cardData = cardDeck[currentCardIndex];
-
-  const existingTopCard = document.querySelector('.top-card');
-  if (existingTopCard) {
-    existingTopCard.classList.remove('top-card');
+  let cardData = cardDeck[currentCardIndex];
+  
+  // Check if this card is already being shown or has been played
+  if (!isCardAvailable(cardData.id)) {
+    // Find the next available card
+    const nextIndex = findNextAvailableCard(currentCardIndex + 1);
+    
+    if (nextIndex === -1) {
+      // No more cards available
+      skipBtn.disabled = true;
+      return;
+    }
+    
+    currentCardIndex = nextIndex;
+    cardData = cardDeck[currentCardIndex];
   }
+  
+  const currentCardDiv = document.getElementById('current-card');
+
+  // Clear the current card area
+  currentCardDiv.innerHTML = '';
 
   newCard = document.createElement('div');
   newCard.textContent = cardData.name;
   newCard.dataset.date = cardData.date;
+  newCard.dataset.cardId = cardData.id; // Store the card ID
   newCard.style.visibility = 'visible';
   newCard.classList.add('card', 'top-card');
   setupCardEvents(newCard);
-  deck.appendChild(newCard);
-  if (existingTopCard) {
-    deck.removeChild(existingTopCard);
+  currentCardDiv.appendChild(newCard);
+  
+  // Set current card ID
+  currentCardId = cardData.id;
+  
+  // Check if this card was previously skipped and remove it from skippedCards
+  const skippedIndex = skippedCards.findIndex(skippedCard => 
+    skippedCard.id === cardData.id
+  );
+  
+  if (skippedIndex !== -1) {
+    skippedCards.splice(skippedIndex, 1);
+    // Disable back button if no more skipped cards
+    if (skippedCards.length === 0) {
+      document.querySelector('.back-button').disabled = true;
+    }
+  }
+  
+  // Disable skip button if this is the last card
+  if (currentCardIndex >= cardDeck.length - 1) {
+    skipBtn.disabled = true;
+  } else {
+    skipBtn.disabled = false;
   }
 }
 
 function updateCheckResultsButton() {
   const checkResultsButton = document.getElementById('check-results-button');
-  if (cardContainer.children.length > 0) {
+  const actualCards = Array.from(cardContainer.children).filter(child => 
+    child.classList.contains('card')
+  );
+  const hasPlacedCards = actualCards.length > 0;
+  const hasCardsLeft = currentCardIndex < cardDeck.length;
+  const placedCardsCount = actualCards.length;
+  
+  // Only enable if there are at least 2 cards placed
+  if (hasPlacedCards && placedCardsCount >= 2) {
     checkResultsButton.disabled = false;
+    
+    // Add shine animation if all cards are placed (no cards left in deck)
+    if (!hasCardsLeft) {
+      checkResultsButton.classList.add('shine');
+    } else {
+      checkResultsButton.classList.remove('shine');
+    }
   } else {
     checkResultsButton.disabled = true;
+    checkResultsButton.classList.remove('shine');
   }
 }
 
@@ -127,7 +274,8 @@ function onCardDragStart(e) {
   e.preventDefault();
   
   const card = e.target;
-  if (card.parentNode === deck) {
+  const currentCardDiv = document.getElementById('current-card');
+  if (card.parentNode === currentCardDiv) {
   draggedCard = card.cloneNode(true);
   setupCardEvents(draggedCard);
   cardArea.appendChild(draggedCard);
@@ -203,7 +351,8 @@ function onMouseUp(e) {
     if (isOverDeck) {
       const topCard = document.querySelector('.top-card');
       if (draggedCard === topCard) {
-        deck.appendChild(draggedCard);
+        const currentCardDiv = document.getElementById('current-card');
+        currentCardDiv.appendChild(draggedCard);
       } else {
         cardArea.removeChild(draggedCard);
         topCard.style.visibility = 'visible';
@@ -225,9 +374,16 @@ function onMouseUp(e) {
       
       placeholder.style.height = '';
 
-      if (draggedCard.parentNode === deck) {
+      const currentCardDiv = document.getElementById('current-card');
+      if (draggedCard.parentNode === currentCardDiv) {
         drawCard();
       } else {
+        // Mark the card as played
+        const cardId = draggedCard.dataset.cardId;
+        if (cardId) {
+          playedCards.add(cardId);
+        }
+        
         currentCardIndex++; // Add this line to increment the index when a card is placed
         drawCard(); // Add this line to draw a new card when a card is placed
       }
@@ -319,43 +475,184 @@ function getFlashcardCount(listName, callback) {
 
 
 function updatePopup(accuracy, results, cards) {
-
   const orderBackwards = isOrderBackwards(cards);
   
   // Get the popup elements
   const popup = document.getElementById("popup");
   const resultsDiv = document.querySelector(".popup-results");
+  const accuracyPercentage = document.getElementById("accuracy-percentage");
+  const correctCount = document.getElementById("correct-count");
+  const incorrectCount = document.getElementById("incorrect-count");
+  const totalCards = document.getElementById("total-cards");
+  const feedbackContent = document.getElementById("feedback-content");
 
   const urlParams = new URLSearchParams(window.location.search);
   const flashSet = urlParams.get('flashcards');
-  const cardsPlayed=results.length;
+  const cardsPlayed = results.length;
   
-  if (orderBackwards) {
-    results.length = 0;
-    results.push(["ALL CARDS ORDERED BACKWARDS"]);
+  // Add warning for backwards order instead of replacing results
+  let orderWarning = "";
+  if (orderBackwards && cards.length >= 2) {
+    orderWarning = "⚠️ WARNING: Cards are in reverse chronological order (newest to oldest). Timeline should be oldest to newest.";
   }
-
-  // Calculate the number of cards played and the total cards
-  
 
   // Get the flashcard count using the callback
   getFlashcardCount(flashSet, (error, flashcardCount) => {
     if (error) {
       console.error("Failed to get flashcard count:", error);
     } else {
-      // Update the results
-      const accuracyText = `Accuracy: ${accuracy.toFixed(2)}%`;
-      const cardsPlayedText = `${cardsPlayed}/${flashcardCount} cards played`;
-      resultsDiv.innerHTML = [accuracyText, cardsPlayedText, ...results].join('<br>');
+      // Calculate stats
+      const correctCards = Math.round((accuracy / 100) * cardsPlayed);
+      const incorrectCards = cardsPlayed - correctCards;
+      
+      // Update the visual stats
+      accuracyPercentage.textContent = `${accuracy.toFixed(0)}%`;
+      correctCount.textContent = correctCards;
+      incorrectCount.textContent = incorrectCards;
+      totalCards.textContent = cardsPlayed;
+      
+      // Generate educational feedback
+      const feedback = generateFeedback(accuracy, correctCards, incorrectCards, cardsPlayed, flashcardCount);
+      feedbackContent.innerHTML = feedback;
+      
+      // Update detailed results
+      const resultsText = results.map(result => {
+        if (typeof result === 'string') {
+          return result;
+        } else if (Array.isArray(result)) {
+          return result.join('<br>');
+        }
+        return '';
+      }).join('<br>').trim();
+      
+      // Add copy button to results div
+      resultsDiv.innerHTML = `
+        ${orderWarning ? `<div class="order-warning">${orderWarning}</div>` : ''}
+        <button class="copy-button" onclick="copyResults()" title="Copy results">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </button>
+        <div class="copy-confirmation">Copied!</div>
+        <div class="results-content">${resultsText}</div>
+      `;
 
+      // Show/hide resume button based on game completion
+      const resumeButton = document.getElementById('resume-button');
+      if (cardsPlayed < flashcardCount) {
+        resumeButton.style.display = 'inline-block';
+      } else {
+        resumeButton.style.display = 'none';
+      }
+      
       // Display the popup
       popup.classList.remove("hidden");
     }
   });
 }
 
+function resumeGame() {
+  // Close the results popup
+  closePopup();
+  
+  // Re-enable the game
+  isCheckResultsCalled = false;
+  hasShownResults = false; // Reset the flag when game is resumed
+  sortableInstance.option("disabled", false);
+  
+  // Re-enable skip button if there are cards left
+  if (currentCardIndex < cardDeck.length) {
+    skipBtn.disabled = false;
+  }
+  
+  // Remove colored backgrounds from cards
+  const cards = Array.from(cardContainer.children).filter((child) =>
+    child.classList.contains("card")
+  );
+  
+  cards.forEach(card => {
+    card.style.backgroundColor = '';
+    card.draggable = true;
+  });
+  
+  // Remove event dates
+  cards.forEach(card => {
+    const eventDate = card.querySelector('.event-date');
+    if (eventDate) {
+      eventDate.remove();
+    }
+  });
+  
+  // Update check results button
+  updateCheckResultsButton();
+}
+
+function generateFeedback(accuracy, correctCards, incorrectCards, cardsPlayed, totalCards) {
+  let feedback = '';
+  
+  if (accuracy === 100) {
+    feedback = `
+      <div class="feedback-item success">
+        <strong>🎉 Perfect Tango!</strong> You've mastered this timeline completely.
+      </div>
+      <div class="feedback-item tip">
+        <strong>💡 Tip:</strong> Try the extended version of this deck for a greater challenge.
+      </div>
+    `;
+  } else if (accuracy >= 80) {
+    feedback = `
+      <div class="feedback-item good">
+        <strong>👍 Great Tango!</strong> You have a solid understanding of this timeline.
+      </div>
+      <div class="feedback-item tip">
+        <strong>💡 Tip:</strong> Review the incorrect cards below and try again to improve your score.
+      </div>
+    `;
+  } else if (accuracy >= 60) {
+    feedback = `
+      <div class="feedback-item okay">
+        <strong>📚 Tango in Progress!</strong> You're on the right track, but there's room for improvement.
+      </div>
+      <div class="feedback-item tip">
+        <strong>💡 Study Tip:</strong> Focus on the chronological relationships between events. Look for patterns in the dates.
+      </div>
+    `;
+  } else {
+    feedback = `
+      <div class="feedback-item needs-work">
+        <strong>📖 Keep Practicing Your Tango!</strong> This timeline needs more practice.
+      </div>
+      <div class="feedback-item tip">
+        <strong>💡 Study Strategy:</strong> 
+        <ul>
+          <li>Start with a few cards at a time</li>
+          <li>Look for date patterns (centuries, decades)</li>
+          <li>Use the "Skip" button if you're unsure</li>
+          <li>Practice regularly to build memory</li>
+        </ul>
+      </div>
+    `;
+  }
+  
+  if (cardsPlayed < totalCards) {
+    const remainingCards = totalCards - cardsPlayed;
+    feedback += `
+      <div class="feedback-item note">
+        <strong>📝 Incomplete Game:</strong> You played ${cardsPlayed} out of ${totalCards} cards. ${remainingCards} card${remainingCards !== 1 ? 's' : ''} remaining.
+      </div>
+    `;
+  }
+  
+  return feedback;
+}
+
 
 function isOrderBackwards(cards) {
+  // Need at least 2 cards to determine if they're ordered backwards
+  if (cards.length < 2) {
+    return false;
+  }
+  
   for (let i = 1; i < cards.length; i++) {
     if (Number(cards[i - 1].dataset.date) <= Number(cards[i].dataset.date)) {
       return false;
@@ -366,26 +663,67 @@ function isOrderBackwards(cards) {
 
 
 function checkResults() {
-  whitepaper.style.pointerEvents = "auto";
-  whitepaper.style.cursor = "pointer";
-  whitepaper.textContent = "Copy";
-
-  if (whitepaper.classList.contains("copied")) {
-    whitepaper.classList.remove("copied");
+  // Check if button is disabled or if there are fewer than 2 cards placed
+  const checkResultsButton = document.getElementById('check-results-button');
+  const actualCards = Array.from(cardContainer.children).filter(child => 
+    child.classList.contains('card')
+  );
+  const placedCardsCount = actualCards.length;
+  
+  if (checkResultsButton.disabled || placedCardsCount < 2) {
+    return; // Don't proceed if button is disabled or insufficient cards
   }
+  
+  // Check if there are cards left in the deck
+  const hasCardsLeft = currentCardIndex < cardDeck.length;
+  
+  if (hasCardsLeft && !hasShownResults) {
+    // Show confirmation popup for incomplete game only if results haven't been shown yet
+    showConfirmPopup();
+    return;
+  }
+  
+  // If no cards left or results already shown, proceed with results
+  showResults();
+}
 
+function showConfirmPopup() {
+  const confirmPopup = document.getElementById('confirm-popup');
+  confirmPopup.classList.remove('hidden');
+  
+  // Add event listeners for the confirmation buttons
+  document.getElementById('continue-check-button').onclick = function() {
+    closeConfirmPopup();
+    showResults();
+  };
+  
+  document.getElementById('cancel-check-button').onclick = function() {
+    closeConfirmPopup();
+  };
+}
+
+function closeConfirmPopup() {
+  const confirmPopup = document.getElementById('confirm-popup');
+  confirmPopup.classList.add('hidden');
+}
+
+function showResults() {
+  // Remove shine animation when results are checked
+  const checkResultsButton = document.getElementById('check-results-button');
+  checkResultsButton.classList.remove('shine');
+  
   isCheckResultsCalled = true;
+  hasShownResults = true; // Mark that results have been shown
   sortableInstance.option("disabled", true);
   skipBtn.disabled = true;
 
   if (deck.querySelector(".top-card")) {
-    deck.querySelector(".top-card").style.backgroundColor = "rgba(192, 192, 192, 0.5)";
+    deck.querySelector(".top-card").style.backgroundColor = "rgba(156, 163, 175, 0.5)";
   }
 
   const cards = Array.from(cardContainer.children).filter((child) =>
     child.classList.contains("card")
   );
-
 
   const orderBackwards = isOrderBackwards(cards);
 
@@ -430,7 +768,7 @@ function checkResults() {
     results.push(
       `${isCorrect ? "CORRECT" : "INCORRECT"} -- ${
         card.dataset.date
-      }: ${card.textContent.replace(card.dataset.date, "")}`
+      }: ${card.textContent.replace(card.dataset.date, "").trim()}`
     );
   });
 
@@ -443,53 +781,13 @@ function checkResults() {
   updatePopup(accuracy, results, cards);
 }
 
-function myCopy(event) {
-  let prevDate = null;
-  let allCorrect = true;
-  let correctCount = 0;
-  let totalCount = 0;
-  skipBtn.disabled = true;
 
-  const results = [];
-  Array.from(cardContainer.children)
-    .filter(child => child.classList.contains('card'))
-    .forEach((card, index) => {
-      const cardDate = Number(card.dataset.date);
-      const isCorrect = prevDate === null || prevDate <= cardDate;
-      allCorrect = allCorrect && isCorrect;
-      prevDate = cardDate;
-
-      if (!card.querySelector('.event-date')) {
-        const eventDate = document.createElement('div');
-        eventDate.classList.add('event-date');
-        eventDate.textContent = Math.floor(card.dataset.date);
-        card.prepend(eventDate);
-      }
-
-      results.push(`${isCorrect ? 'CORRECT' : 'INCORRECT'} -- ${card.dataset.date}: ${card.textContent.replace(/[0-9]/g, '')}`);
-    });
-  
-  var copyText = document.querySelector(".popup-results").innerHTML.replace(new RegExp('<br>', 'g'), "\n");
-//results//event.target.parentNode.nextSibling.nextSibling.value
-
-   /* Copy the text inside the text field */
-  parent.navigator.clipboard.writeText(copyText);
-
-  //let copyText = document.querySelector("#input");
-
-  //alert("Copied results");
-  whitepaper.classList.add('copied');
-  whitepaper.textContent = "Copied";
-  whitepaper.style.pointerEvents = 'none';
-}
 
 function toggleDarkMode() {
   isDarkMode = !isDarkMode;
   
-  let url = new URL(window.location.href);
-  let darktext= isDarkMode ? "enabled" : "disabled"
-  url.searchParams.set('dark', darktext);
-  window.history.replaceState({}, '', url);
+  // Save theme preference to localStorage
+  saveTheme(isDarkMode ? 'dark' : 'light');
 
   // Add or remove the 'dark-mode' class for each element
   document.body.classList.toggle('dark-mode', isDarkMode);
@@ -504,20 +802,32 @@ function toggleDarkMode() {
   document.getElementById('popup').classList.toggle('dark-mode', isDarkMode);
   //document.getElementById('popup-results').classList.toggle('dark-mode', isDarkMode);
 
-  themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+  const themeText = themeToggle.querySelector('span');
+  themeText.textContent = isDarkMode ? 'Light' : 'Dark';
 }
 
 
 
 skipBtn.addEventListener('click', () => {
-  currentCardIndex++;
-  const newCardData = {
+  // Don't allow skipping if this is the last card
+  if (currentCardIndex >= cardDeck.length - 1) {
+    return;
+  }
+  
+  // Store the skipped card with ID
+  const skippedCardData = {
     name: newCard.textContent,
-    date: newCard.dataset.date
+    date: newCard.dataset.date,
+    id: newCard.dataset.cardId
   };
-  cardDeck.push(newCardData);
+  skippedCards.push(skippedCardData);
+  
+  currentCardIndex++;
   drawCard();
   hasInteracted = true;
+  
+  // Enable back button
+  document.querySelector('.back-button').disabled = false;
 });
 
 checkBtn.addEventListener('click', () => {
@@ -527,6 +837,8 @@ checkBtn.addEventListener('click', () => {
 themeToggle.addEventListener('click', () => {
   toggleDarkMode();
 });
+
+
 
 window.addEventListener('beforeunload', (e) => {
   if (hasInteracted) {
@@ -539,6 +851,16 @@ function closePopup() {
   popupDiv.classList.add('hidden');
 }
 
+function closeInstructionsPopup() {
+  const instructionsPopup = document.getElementById('instructions-popup');
+  instructionsPopup.classList.add('hidden');
+}
+
+function closeCreditsPopup() {
+  const creditsPopup = document.getElementById('credits-popup');
+  creditsPopup.classList.add('hidden');
+}
+
 function howTo() {
   const instructionsPopup = document.getElementById('instructions-popup');
   instructionsPopup.classList.remove('hidden');
@@ -549,31 +871,102 @@ function closeInstructionsPopup() {
   instructionsPopup.classList.add('hidden');
 }
 
-function credits() {
-  const creditsPopup = document.getElementById('credits-popup');
-  creditsPopup.classList.remove('hidden');
-}
 
-function closeCreditsPopup() {
-  const creditsPopup = document.getElementById('credits-popup');
-  creditsPopup.classList.add('hidden');
-}
 
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
     const popupDiv = document.getElementById('popup');
     const instructionsPopup = document.getElementById('instructions-popup');
-    const creditsPopup = document.getElementById('credits-popup');
 
     if (!popupDiv.classList.contains('hidden')) {
       closePopup();
     } else if (!instructionsPopup.classList.contains('hidden')) {
       closeInstructionsPopup();
-    } else if (!creditsPopup.classList.contains('hidden')) {
-      closeCreditsPopup();
     }
   }
 });
+
+// Add click outside to close functionality for all popups
+document.addEventListener('DOMContentLoaded', function() {
+  const popupDiv = document.getElementById('popup');
+  const instructionsPopup = document.getElementById('instructions-popup');
+  const confirmPopup = document.getElementById('confirm-popup');
+
+  // Results popup
+  popupDiv.addEventListener('click', function(event) {
+    if (event.target === popupDiv) {
+      closePopup();
+    }
+  });
+
+  // Instructions popup
+  instructionsPopup.addEventListener('click', function(event) {
+    if (event.target === instructionsPopup) {
+      closeInstructionsPopup();
+    }
+  });
+
+  // Confirmation popup
+  confirmPopup.addEventListener('click', function(event) {
+    if (event.target === confirmPopup) {
+      closeConfirmPopup();
+    }
+  });
+  
+
+});
+
+function goBack() {
+  if (skippedCards.length === 0) {
+    return;
+  }
+  
+  // Get the last skipped card
+  const lastSkippedCard = skippedCards.pop();
+  
+  // Remove the card from played cards if it was there
+  playedCards.delete(lastSkippedCard.id);
+  
+  // Insert the skipped card back at the current position
+  cardDeck.splice(currentCardIndex, 0, lastSkippedCard);
+  
+  // Redraw the card (this will show the restored card)
+  drawCard();
+  
+  // Disable back button if no more skipped cards
+  if (skippedCards.length === 0) {
+    document.querySelector('.back-button').disabled = true;
+  }
+  
+  // Show a message
+  showMessage('Card restored!');
+}
+
+function updateCreatorAttribution(flashcardSet) {
+  const studyText = document.getElementById('study-text');
+  const creator = creatorMapping[flashcardSet];
+  
+  if (creator) {
+    // Get the display name for the subject
+    const subjectNames = {
+      'test': 'Test Deck',
+      'apeuro': 'AP Euro (key dates)',
+      'apeuro-extended': 'AP Euro (extended)',
+      'apush': 'APUSH (key dates)',
+      'apush-extended': 'APUSH (extended)',
+      'apwh': 'AP World'
+    };
+    
+    const subjectName = subjectNames[flashcardSet] || flashcardSet;
+    studyText.innerHTML = `Studying <strong>${subjectName}</strong> by ${creator}`;
+    
+    // Show the study info
+    document.getElementById('study-info').style.display = 'flex';
+  } else {
+    // Hide the study info if no creator found
+    document.getElementById('study-info').style.display = 'none';
+  }
+}
 
 document.getElementById('message-close').addEventListener('click', () => {
   closePopup();
@@ -581,6 +974,10 @@ document.getElementById('message-close').addEventListener('click', () => {
 
 document.getElementById('restart-button').addEventListener('click', () => {
   restart()
+});
+
+document.getElementById('resume-button').addEventListener('click', () => {
+  resumeGame()
 });
 
 document.getElementById('check-results-button').onclick = checkResults;
@@ -594,28 +991,38 @@ const sortableInstance = Sortable.create(cardContainer, {
   animation: 150,
   ghostClass: 'sortable-ghost',
   chosenClass: 'sortable-chosen',
-  forceFallback: true, // Add this line
-  fallbackClass: 'sortable-fallback', // Add this line
-  swap: false, // Add this line
-  swapThreshold: 0.5, // Add this line
+  forceFallback: true,
+  fallbackClass: 'sortable-fallback',
+  swap: false,
+  swapThreshold: 0.5,
   onAdd: updateCheckResultsButton,
   onUpdate: updateCheckResultsButton,
   onEnd: updateCheckResultsButton,
   //disabled: !isDraggable,
 });
 
-// Hide the Skip button and card deck initially
+// Hide the Skip button initially, and hide the deck and card-area initially
 skipBtn.style.display = 'none';
 deck.style.display = 'none';
+document.querySelector('.card-area').style.display = 'none';
+
+// Hide game elements initially
+document.querySelector('.current-card').style.display = 'none';
+document.querySelector('.back-button').style.display = 'none';
 
 // Add event listeners to the subject selector and load game button
 const subjectSelector = document.getElementById('subject');
 const subjectDiv = document.getElementById('subject-selector');
 const loadGameButton = document.getElementById('load-game-button');
 
-subjectSelector.addEventListener('change', () => {
-  loadGameButton.disabled = subjectSelector.value === '';
-});
+// Add event listener for subject selector change
+if (subjectSelector) {
+  subjectSelector.addEventListener('change', () => {
+    if (loadGameButton) {
+      loadGameButton.disabled = subjectSelector.value === '';
+    }
+  });
+}
 
 async function loadGame(flashcardSetName) {
   gtag('event', 'game_load', {
@@ -633,38 +1040,89 @@ async function loadGame(flashcardSetName) {
         "Page", window.location.href+"&flashcards="+selectedSubject);
   }
 
+  // Reset UI state
+  const cardContainer = document.querySelector('.card-container');
+  if (cardContainer) {
+    cardContainer.innerHTML = '';
+  }
+  
+  // Reset placeholder
+  placeholder.style.opacity = '1';
+  placeholder.style.color = '#3b82f6';
+  placeholder.style.borderColor = '#3b82f6';
+  placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
     
   if (newFlashcards) {
     flashcards.length = 0;
     flashcards.push(...newFlashcards);
-    cardDeck = shuffle([...flashcards]);
+    
+    // Add unique IDs to cards
+    const cardsWithIds = newFlashcards.map((card, index) => ({
+      ...card,
+      id: `${selectedSubject}_${index}_${card.name.replace(/\s+/g, '_')}_${card.date}`
+    }));
+    
+    cardDeck = shuffle([...cardsWithIds]);
     currentCardIndex = 0;
+    skippedCards = []; // Reset skipped cards
+    playedCards.clear(); // Reset played cards tracking
+    currentCardId = null; // Reset current card ID
 
-    // Show the Skip button and card deck
+    // Show the Skip button, card deck, and card area
     skipBtn.style.display = 'block';
     deck.style.display = 'flex';
     deck.style.alignItems = 'center'; // Add this line
     deck.style.justifyContent = 'center'; // Add this line
+    document.querySelector('.card-area').style.display = 'flex';
+    
+    // Show game elements
+    document.querySelector('.current-card').style.display = 'flex';
+    document.querySelector('.back-button').style.display = 'block';
+    
+    // Disable back button initially
+    document.querySelector('.back-button').disabled = true;
+
+    // Update creator attribution
+    updateCreatorAttribution(flashcardSetName);
+
+    // Remove shine animation from check results button
+    const checkResultsButton = document.getElementById('check-results-button');
+    checkResultsButton.classList.remove('shine');
 
     // Disable the subject selector and load game button
-    subjectSelector.disabled = true;
-    loadGameButton.disabled = true;
-
-    subjectDiv.style.display = 'none';
+    if (subjectSelector) subjectSelector.disabled = true;
+    if (loadGameButton) loadGameButton.disabled = true;
+    if (subjectDiv) subjectDiv.style.display = 'none';
 
     drawCard();
+    
+    // Enable skip button if there are multiple cards
+    if (cardDeck.length > 1) {
+      skipBtn.disabled = false;
+    }
+    
+    // Ensure check results button is in correct initial state
+    updateCheckResultsButton();
+    
     console.log(`Loading game with flashcard set: ${flashcardSetName}`);
+    console.log('Game elements should now be visible:', {
+      skipBtn: skipBtn.style.display,
+      deck: deck.style.display,
+      cardArea: document.querySelector('.card-area').style.display,
+      currentCard: document.querySelector('.current-card').style.display,
+      backButton: document.querySelector('.back-button').style.display
+    });
   }
 }
 
 loadGameButton.addEventListener('click', async () => {
 
   placeholder.style.opacity = '1';
-  placeholder.style.color = '#00f';
-  placeholder.style.borderColor = '#00f';
-  placeholder.style.backgroundColor = '#b19cd9';
+  placeholder.style.color = '#3b82f6';
+  placeholder.style.borderColor = '#3b82f6';
+  placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
   
-  const selectedSubject = subjectSelector.value;
+  const selectedSubject = subjectSelector ? subjectSelector.value : '';
   const newFlashcards = await loadFlashcards(selectedSubject);
 
   const params = new URLSearchParams(window.location.search);
@@ -677,21 +1135,102 @@ loadGameButton.addEventListener('click', async () => {
   if (newFlashcards) {
     flashcards.length = 0;
     flashcards.push(...newFlashcards);
-    cardDeck = shuffle([...flashcards]);
+    
+    // Add unique IDs to cards
+    const cardsWithIds = newFlashcards.map((card, index) => ({
+      ...card,
+      id: `${selectedSubject}_${index}_${card.name.replace(/\s+/g, '_')}_${card.date}`
+    }));
+    
+    cardDeck = shuffle([...cardsWithIds]);
     currentCardIndex = 0;
+    skippedCards = []; // Reset skipped cards
+    playedCards.clear(); // Reset played cards tracking
+    currentCardId = null; // Reset current card ID
 
-    // Show the Skip button and card deck
+    // Show the Skip button, card deck, and card area
     skipBtn.style.display = 'block';
     deck.style.display = 'flex';
     deck.style.alignItems = 'center'; // Add this line
     deck.style.justifyContent = 'center'; // Add this line
+    document.querySelector('.card-area').style.display = 'flex';
+    
+    // Show game elements
+    document.querySelector('.current-card').style.display = 'flex';
+    document.querySelector('.back-button').style.display = 'block';
+    
+    // Disable back button initially
+    document.querySelector('.back-button').disabled = true;
+
+    // Update creator attribution
+    updateCreatorAttribution(selectedSubject);
+
+    // Remove shine animation from check results button
+    const checkResultsButton = document.getElementById('check-results-button');
+    checkResultsButton.classList.remove('shine');
 
     // Disable the subject selector and load game button
-    subjectSelector.disabled = true;
-    loadGameButton.disabled = true;
-
-    subjectDiv.style.display = 'none';
+    if (subjectSelector) subjectSelector.disabled = true;
+    if (loadGameButton) loadGameButton.disabled = true;
+    if (subjectDiv) subjectDiv.style.display = 'none';
 
     drawCard();
+    
+    // Enable skip button if there are multiple cards
+    if (cardDeck.length > 1) {
+      skipBtn.disabled = false;
+    }
+    
+    // Ensure check results button is in correct initial state
+    updateCheckResultsButton();
   }
 });
+
+function copyResults() {
+  const resultsDiv = document.querySelector(".popup-results");
+  const copyButton = resultsDiv.querySelector(".copy-button");
+  const copyConfirmation = resultsDiv.querySelector(".copy-confirmation");
+  const resultsContent = resultsDiv.querySelector(".results-content");
+  
+  // Get the text content from the results-content div only
+  let textContent = resultsContent.innerText;
+  
+  // Clean up whitespace more aggressively
+  textContent = textContent
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join('\n')
+    .trim();
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(textContent).then(() => {
+    // Show visual feedback
+    copyButton.classList.add('copied');
+    copyConfirmation.classList.add('show');
+    
+    // Reset after 2 seconds
+    setTimeout(() => {
+      copyButton.classList.remove('copied');
+      copyConfirmation.classList.remove('show');
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = textContent;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // Show visual feedback even for fallback
+    copyButton.classList.add('copied');
+    copyConfirmation.classList.add('show');
+    
+    setTimeout(() => {
+      copyButton.classList.remove('copied');
+      copyConfirmation.classList.remove('show');
+    }, 2000);
+  });
+}

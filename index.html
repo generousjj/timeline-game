@@ -11,6 +11,9 @@
   <meta property="og:description" content="Study for history courses through this interactive timeline game!" />
   <meta property="og:url" content="https://generousjj.github.io/timeline-game/" />
   <meta property="og:image" content="https://cdn.discordapp.com/attachments/915989411475365898/1089962030913556570/timeline.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
   <script defer src="scripts.js"></script>
@@ -29,23 +32,34 @@
 
 <body>
 
-  
+
+
   <div id="instructions-popup" class="popup hidden">
     <div class="popup-box">
       <div class="popup-header">
-        <h2 class="popup-title">🤔 How to Play</h2>
+        <h2 class="popup-title">❓ How to Play</h2>
         <span class="popup-close" onclick="closeInstructionsPopup()">&times;</span>
       </div>
       <div class="popup-content">
         <p>1. Choose a subject from the dropdown menu and click "Load Game".</p>
-        <p>2. Cards with events will appear on the left side of the screen.</p>
-        <p>3. Drag and drop the cards in the correct chronological order on the right side of the screen.</p>
+        <p>2. Cards with events will appear in the deck area.</p>
+        <p>3. Drag and drop the cards in the correct chronological order in the play area.</p>
         <p>4. If you're unsure of an event's date, you can click "Skip" to move to the next card.</p>
-        <p>5. When you're done, click "Check Results" to see your accuracy and get detailed results.</p>
+        <p>5. Use "Back" to restore a skipped card if needed.</p>
+        <p>6. When you have at least 2 cards placed, click "Check Results" to see your accuracy.</p>
         <center>
-          <p>👥: Credits</p>
-          <p>🌙: Toggle dark mode</p>
-          <p>📚: Select new subject</p>
+          <p><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; vertical-align: middle;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+          </svg> Help: How to play</p>
+          <p><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; vertical-align: middle;">
+            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+          </svg> Theme: Toggle dark mode</p>
+          <p><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; vertical-align: middle;">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg> New Tango: Select new subject</p>
+          <p><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; vertical-align: middle;">
+            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+          </svg> Restart Tango: Start over</p>
         </center>
       </div>
     </div>
@@ -54,7 +68,7 @@
   <div id="credits-popup" class="popup hidden">
     <div class="popup-box">
       <div class="popup-header">
-        <h2 class="popup-title">Credits</h2>
+        <h2 class="popup-title">ℹ️ Credits</h2>
         <span class="popup-close" onclick="closeCreditsPopup()">&times;</span>
       </div>
       <div class="popup-content">
@@ -76,6 +90,17 @@
 
   
   <div class="container">
+    <div class="logo-section">
+      <div class="logo-title-group">
+        <img src="timetango.png" alt="TimeTango Logo" class="logo">
+        <h1 class="site-title">TimeTango</h1>
+        
+      </div>
+      <div class="study-info" id="study-info">
+        <div class="study-text" id="study-text"></div>
+      </div>
+    </div>
+    
     <div class="subject-selector" id="subject-selector">
       <label for="subject">Choose a subject:</label>
       <select name="subject" id="subject" class="custom-select">
@@ -89,20 +114,53 @@
       </select>
       <button id="load-game-button" disabled>Load Game</button>
     </div>
+    
     <div class="deck">
       <button class="next-button" onclick="drawCard()">Skip</button>
+      <div class="current-card" id="current-card"></div>
+      <button class="back-button" onclick="goBack()" disabled>Back</button>
     </div>
     <div class="card-area">
       <div class="card-container">
       </div>
-      <div class="placeholder">Drag cards from the left to play!</div>
+      <div class="placeholder">Drag cards from the deck to play!</div>
+      <div class="timeline-arrow">TIME ↓</div>
     </div>
   </div>
-  <button id="check-results-button" class="check-results-button" onclick=checkResults() disabled>Check Results</button>
-  <span class="how-to" onclick=howTo()>🤔</span>
-  <span class="credits" onclick=credits()>👥</span>
-  <span class="theme-toggle">🌙</span>
-  <span class="subject-toggle" onclick=newSubject()>📚</span>
+  <button id="check-results-button" class="check-results-button" onclick=checkResults() disabled>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+    </svg>
+    <span>Check Results</span>
+  </button>
+        <button class="interface-button subject-toggle" onclick=newSubject() title="New Tango">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        <span>New Tango</span>
+      </button>
+  <button class="interface-button how-to" onclick=howTo() title="How to Play">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+    </svg>
+    <span>Help</span>
+  </button>
+
+  <button class="interface-button theme-toggle" title="Toggle Theme">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="theme-icon">
+      <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+    </svg>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="sun-icon">
+      <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
+    </svg>
+    <span>Theme</span>
+  </button>
+        <button class="interface-button restart-button" onclick="location.reload()" title="Restart Tango">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+        </svg>
+        <span>Restart Tango</span>
+      </button>
   <div id="message-box" class="message-box hidden">
     <span id="message-text"></span>
     <button id="message-close" class="message-close">&times;</button>
@@ -114,27 +172,95 @@
         <span class="popup-close" onclick="closePopup()">&times;</span>
       </div>
       <div class="popup-content">
+        <div class="results-summary">
+          <div class="accuracy-display">
+            <div class="accuracy-circle">
+              <span class="accuracy-percentage" id="accuracy-percentage">0%</span>
+            </div>
+            <div class="accuracy-label">Accuracy</div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-number" id="correct-count">0</div>
+              <div class="stat-label">Correct</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="incorrect-count">0</div>
+              <div class="stat-label">Incorrect</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="total-cards">0</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="feedback-section">
+          <h3 class="feedback-title">How to Improve</h3>
+          <div class="feedback-content" id="feedback-content">
+            <!-- Feedback will be displayed here -->
+          </div>
+        </div>
+        
         <div class="popup-results">
-          <!-- Your results will be displayed here -->
+          <!-- Detailed results will be displayed here -->
         </div>
         
-        <input type="checkbox" id="title1" name="contentbox" />
-        <div class="copyContent">
-        
-        <div class="tooltip">
-        	<div class="whitepaper" id="whitepaper" onclick="myCopy(event)">
-        		 <span class="tooltiptext">Copy link 1 to clipboard</span>Copy</div>
-        		</div>
-        	 <input type="text" value="VALUE HERE" id="myInput">
-        	</div>
-        </div>
-      
         <div class="button-holder">
-          <button id="restart-button" class="restart-button">Restart</button>
+          <button id="resume-button" class="resume-button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            Resume Tango
+          </button>
+          <button id="restart-button" class="restart-button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+            </svg>
+            Restart Tango
+          </button>
         </div>
       </div>
     </div>
   </div>
+  
+  <!-- Confirmation popup for incomplete games -->
+  <div id="confirm-popup" class="popup hidden">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h2 class="popup-title">Incomplete Game</h2>
+        <span class="popup-close" onclick="closeConfirmPopup()">&times;</span>
+      </div>
+      <div class="popup-content">
+        <p>You haven't finished placing all the cards yet. Are you sure you want to check your results now?</p>
+        <div class="button-holder">
+          <button id="continue-check-button" class="continue-button">Check Results</button>
+          <button id="cancel-check-button" class="cancel-button">Keep Playing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="instructions-popup" class="popup hidden">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h2 class="popup-title">❓ How to Play</h2>
+        <span class="popup-close" onclick="closeInstructionsPopup()">&times;</span>
+      </div>
+      <div class="popup-content">
+        <p>1. Select a subject from the dropdown menu and click "Load Game"</p>
+        <p>2. Drag cards from the deck to the timeline area</p>
+        <p>3. Reorder cards by dragging them within the timeline</p>
+        <p>4. Click "Check Results" to see how well you did</p>
+        <p>5. Try to get all cards in the correct chronological order!</p>
+        <p><em>Ready to tango with history? Let's dance through time! 🕺</em></p>
+      </div>
+    </div>
+  </div>
+  
+
+  
+
 </body>
 
 </html>
