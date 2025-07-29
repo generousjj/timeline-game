@@ -62,10 +62,10 @@ const THEME_KEY = 'timetango-theme';
 // Get saved theme preference or default to 'light'
 function getSavedTheme() {
   try {
-    return localStorage.getItem(THEME_KEY) || 'light';
+    return localStorage.getItem(THEME_KEY) || 'dark';
   } catch (e) {
     console.warn('localStorage not available, using default theme');
-    return 'light';
+    return 'dark';
   }
 }
 
