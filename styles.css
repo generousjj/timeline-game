@@ -1611,4 +1611,252 @@ body.dark-mode .custom-select:focus {
 
 body.dark-mode .attribution-link {
   color: #d1d5db; /* Lighter color for dark mode */
+}
+
+/* Import Button */
+.import-button {
+  background-color: #10b981;
+  color: white;
+  border: 2px solid #10b981;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-left: 0.5rem;
+}
+
+.import-button:hover {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+.import-button:disabled {
+  background-color: #6b7280;
+  border-color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Quizlet Import Popup Styles */
+.import-instructions {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  border-left: 4px solid #3b82f6;
+}
+
+.import-instructions ol {
+  margin: 0.5rem 0 0 1rem;
+}
+
+.import-instructions li {
+  margin-bottom: 0.25rem;
+}
+
+#quizlet-text {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+#quizlet-text:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.import-options {
+  margin-bottom: 1rem;
+}
+
+.import-mode, .order-options {
+  margin-bottom: 1rem;
+}
+
+.import-mode label, .order-options label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.import-mode input[type="radio"], .order-options input[type="radio"] {
+  margin-right: 0.5rem;
+}
+
+#parse-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  margin-bottom: 1rem;
+}
+
+#parse-button:hover {
+  background-color: #2563eb;
+}
+
+#preview-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+#preview-section h3 {
+  margin-bottom: 1rem;
+  color: #374151;
+}
+
+#preview-cards {
+  margin-bottom: 1rem;
+}
+
+.preview-card {
+  background-color: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.preview-card .card-name {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.preview-card .card-date {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.deck-name-input {
+  margin-bottom: 1rem;
+}
+
+.deck-name-input label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.deck-name-input input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.deck-name-input input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.button-holder {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.button-holder button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.button-holder button:first-child {
+  background-color: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+}
+
+.button-holder button:first-child:hover {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+.button-holder button:last-child {
+  background-color: #6b7280;
+  color: white;
+  border: 1px solid #6b7280;
+}
+
+.button-holder button:last-child:hover {
+  background-color: #4b5563;
+  border-color: #4b5563;
+}
+
+/* Dark mode styles for Quizlet import */
+body.dark-mode .import-instructions {
+  background-color: #1f2937;
+  border-left-color: #60a5fa;
+}
+
+body.dark-mode #quizlet-text {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+body.dark-mode #quizlet-text:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+body.dark-mode #preview-section h3 {
+  color: #e5e7eb;
+}
+
+body.dark-mode .preview-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .preview-card .card-name {
+  color: #f9fafb;
+}
+
+body.dark-mode .preview-card .card-date {
+  color: #9ca3af;
+}
+
+body.dark-mode .deck-name-input label {
+  color: #e5e7eb;
+}
+
+body.dark-mode .deck-name-input input {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+body.dark-mode .deck-name-input input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+/* Mobile responsiveness for import button */
+@media (max-width: 768px) {
+  .import-button {
+    margin-left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
 } 

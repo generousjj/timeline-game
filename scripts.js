@@ -1456,3 +1456,343 @@ function copyResults() {
     }, 2000);
   });
 }
+
+// Quizlet Import Functions
+function openQuizletImport() {
+  const popup = document.getElementById('quizlet-import-popup');
+  popup.classList.remove('hidden');
+}
+
+function closeQuizletImportPopup() {
+  const popup = document.getElementById('quizlet-import-popup');
+  popup.classList.add('hidden');
+  // Clear the form
+  document.getElementById('quizlet-text').value = '';
+  document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('preview-cards').innerHTML = '';
+}
+
+function updateOrderOptionsVisibility() {
+  const importMode = document.querySelector('input[name="import-mode"]:checked').value;
+  const orderOptions = document.getElementById('order-options');
+  
+  if (importMode === 'quizlet-order') {
+    orderOptions.style.display = 'block';
+  } else {
+    orderOptions.style.display = 'none';
+  }
+}
+
+function parseQuizletText() {
+  const text = document.getElementById('quizlet-text').value.trim();
+  if (!text) {
+    showMessage('Please paste some Quizlet text first.');
+    return;
+  }
+
+  const importMode = document.querySelector('input[name="import-mode"]:checked').value;
+  const cardNameSource = document.querySelector('input[name="card-name-source"]:checked').value;
+  
+  try {
+    const cards = parseQuizletExport(text, importMode, cardNameSource);
+    
+    if (cards.length === 0) {
+      showMessage('No valid cards found. Please check your Quizlet export format.');
+      return;
+    }
+    
+    showQuizletPreview(cards);
+  } catch (error) {
+    showMessage('Error parsing Quizlet text: ' + error.message);
+  }
+}
+
+function parseQuizletExport(text, mode, cardNameSource = 'term') {
+  const lines = text.split('\n').filter(line => line.trim());
+  const cards = [];
+  let skippedCards = 0;
+  
+  for (let i = 0; i < lines.length; i += 2) {
+    if (i + 1 >= lines.length) break;
+    
+    const term = lines[i].trim();
+    const definition = lines[i + 1].trim();
+    
+    if (!term || !definition) {
+      skippedCards++;
+      continue;
+    }
+    
+    let cardName, cardDate;
+    
+    if (mode === 'auto-detect') {
+      // Try to extract a number from either term or definition
+      const termNumber = extractNumber(term);
+      const defNumber = extractNumber(definition);
+      
+      if (termNumber !== null && isYear(termNumber)) {
+        cardName = definition;
+        cardDate = termNumber;
+      } else if (defNumber !== null && isYear(defNumber)) {
+        cardName = term;
+        cardDate = defNumber;
+      } else {
+        // Skip cards without valid dates/numbers
+        skippedCards++;
+        continue;
+      }
+    } else {
+      // Quizlet order mode
+      cardName = cardNameSource === 'term' ? term : definition;
+      cardDate = cards.length + 1; // 1, 2, 3, etc.
+    }
+    
+    cards.push({
+      name: cardName,
+      date: cardDate
+    });
+  }
+  
+  if (skippedCards > 0) {
+    showMessage(`Skipped ${skippedCards} cards that don't have valid dates/numbers.`);
+  }
+  
+  return cards;
+}
+
+function extractNumber(text) {
+  const numbers = text.match(/\d+/g);
+  if (!numbers) return null;
+  
+  // Return the first number found
+  return parseInt(numbers[0]);
+}
+
+function isYear(num) {
+  // Consider numbers between 1000 and 2100 as years
+  return num >= 1000 && num <= 2100;
+}
+
+function showQuizletPreview(cards) {
+  const previewSection = document.getElementById('preview-section');
+  const previewCards = document.getElementById('preview-cards');
+  
+  // Show first 3 cards
+  const previewCardsHtml = cards.slice(0, 3).map(card => `
+    <div class="preview-card">
+      <div class="card-name">${card.name}</div>
+      <div class="card-date">Date: ${card.date}</div>
+    </div>
+  `).join('');
+  
+  previewCards.innerHTML = previewCardsHtml;
+  previewSection.style.display = 'block';
+}
+
+function importQuizletDeck() {
+  const text = document.getElementById('quizlet-text').value.trim();
+  const importMode = document.querySelector('input[name="import-mode"]:checked').value;
+  const cardNameSource = document.querySelector('input[name="card-name-source"]:checked').value;
+  const deckName = document.getElementById('deck-name').value.trim() || 'Custom Deck';
+  
+  try {
+    const cards = parseQuizletExport(text, importMode, cardNameSource);
+    
+    if (cards.length === 0) {
+      showMessage('No valid cards found.');
+      return;
+    }
+    
+    // Save to URL and localStorage
+    saveCustomDeckToURL(deckName, cards);
+    
+    // Close popup
+    closeQuizletImportPopup();
+    
+    // Show success message
+    showMessage(`Successfully imported ${cards.length} cards from "${deckName}"!`);
+    
+    // Show share button
+    const shareButton = document.getElementById('share-deck-button');
+    if (shareButton) {
+      shareButton.style.display = 'block';
+    }
+    
+  } catch (error) {
+    showMessage('Error importing deck: ' + error.message);
+  }
+}
+
+function saveCustomDeckToURL(deckName, cards) {
+  const deckData = {
+    name: deckName,
+    cards: cards
+  };
+  
+  // Compress the data
+  const jsonString = JSON.stringify(deckData);
+  const compressed = btoa(jsonString);
+  
+  // Check if URL would be too long
+  const maxUrlLength = 2000;
+  const newUrl = new URL(window.location);
+  newUrl.searchParams.set('custom', compressed);
+  
+  if (newUrl.toString().length > maxUrlLength) {
+    // Use localStorage instead
+    const shortId = Math.random().toString(36).substring(2, 8);
+    const storageData = {
+      id: shortId,
+      deck: deckData,
+      date: Date.now()
+    };
+    
+    try {
+      localStorage.setItem(`timetango-deck-${shortId}`, JSON.stringify(storageData));
+      cleanupOldDecks();
+      
+      // Update URL with short ID
+      newUrl.searchParams.delete('custom');
+      newUrl.searchParams.set('deck', shortId);
+      window.history.replaceState({}, '', newUrl);
+      
+      showMessage(`Deck saved! Share this URL: ${newUrl.toString()}\n\nNote: Large decks are stored locally and may not work on other devices.`);
+    } catch (error) {
+      showMessage('Error saving deck: ' + error.message);
+    }
+  } else {
+    // Use URL method
+    window.history.replaceState({}, '', newUrl);
+    showMessage(`Deck saved! Share this URL: ${newUrl.toString()}`);
+  }
+}
+
+function loadCustomDeckFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const customParam = urlParams.get('custom');
+  const deckParam = urlParams.get('deck');
+  
+  if (customParam) {
+    try {
+      const jsonString = atob(customParam);
+      const deckData = JSON.parse(jsonString);
+      
+      if (deckData.name && deckData.cards && Array.isArray(deckData.cards)) {
+        // Load the custom deck
+        loadCustomDeck(deckData);
+        return true;
+      }
+    } catch (error) {
+      console.error('Error loading custom deck from URL:', error);
+    }
+  }
+  
+  if (deckParam) {
+    try {
+      const storageKey = `timetango-deck-${deckParam}`;
+      const storedData = localStorage.getItem(storageKey);
+      
+      if (storedData) {
+        const data = JSON.parse(storedData);
+        if (data.deck && data.deck.name && data.deck.cards) {
+          loadCustomDeck(data.deck);
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading deck from localStorage:', error);
+    }
+  }
+  
+  return false;
+}
+
+function loadCustomDeck(deckData) {
+  // Convert to the format expected by the game
+  const customFlashcards = deckData.cards.map((card, index) => ({
+    name: card.name,
+    date: card.date,
+    id: `custom_${index}_${card.name.replace(/\s+/g, '_')}_${card.date}`
+  }));
+  
+  // Set up the game with custom cards
+  unplayedCards = shuffle([...customFlashcards]);
+  skippedCards = [];
+  playedCards.clear();
+  currentCard = null;
+  hasInteracted = false;
+  isCheckResultsCalled = false;
+  hasShownResults = false;
+  
+  // Clear existing cards
+  const cardContainer = document.querySelector('.card-container');
+  if (cardContainer) {
+    cardContainer.innerHTML = '';
+  }
+  
+  // Reset placeholder
+  placeholder.style.opacity = '1';
+  placeholder.style.color = '#3b82f6';
+  placeholder.style.borderColor = '#3b82f6';
+  placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
+  
+  // Hide subject selector
+  const subjectDiv = document.getElementById('subject-selector');
+  if (subjectDiv) subjectDiv.style.display = 'none';
+  
+  // Show game elements
+  skipBtn.style.display = 'block';
+  deck.style.display = 'flex';
+  cardArea.style.display = 'flex';
+  document.querySelector('.current-card').style.display = 'flex';
+  document.querySelector('.back-button').style.display = 'block';
+  
+  // Add game-loaded class
+  addGameLoadedClass();
+  
+  // Update creator attribution
+  updateCreatorAttribution(deckData.name);
+  
+  // Start the game
+  drawCard();
+  updateCheckResultsButton();
+  
+  // Show share button
+  const shareButton = document.getElementById('share-deck-button');
+  if (shareButton) {
+    shareButton.style.display = 'block';
+  }
+}
+
+function cleanupOldDecks() {
+  const maxDecks = 10;
+  const keys = Object.keys(localStorage).filter(key => key.startsWith('timetango-deck-'));
+  
+  if (keys.length > maxDecks) {
+    // Sort by date and remove oldest
+    const deckData = keys.map(key => ({
+      key,
+      data: JSON.parse(localStorage.getItem(key))
+    })).sort((a, b) => a.data.date - b.data.date);
+    
+    // Remove oldest decks
+    const toRemove = deckData.slice(0, keys.length - maxDecks);
+    toRemove.forEach(deck => {
+      localStorage.removeItem(deck.key);
+    });
+  }
+}
+
+// Add event listeners for import mode changes
+document.addEventListener('DOMContentLoaded', function() {
+  const importModeRadios = document.querySelectorAll('input[name="import-mode"]');
+  importModeRadios.forEach(radio => {
+    radio.addEventListener('change', updateOrderOptionsVisibility);
+  });
+  
+  // Load custom deck from URL if present
+  if (loadCustomDeckFromURL()) {
+    // Custom deck loaded, don't show subject selector
+    return;
+  }
+});

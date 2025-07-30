@@ -114,6 +114,7 @@
         <option value="apwh">AP World</option>
       </select>
       <button id="load-game-button" disabled>Load Game</button>
+      <button id="import-quizlet-button" class="import-button" onclick="openQuizletImport()">Import Quizlet</button>
     </div>
     
     <div class="deck">
@@ -170,6 +171,60 @@
   <div id="message-box" class="message-box hidden">
     <span id="message-text"></span>
     <button id="message-close" class="message-close">&times;</button>
+  </div>
+
+  <!-- Quizlet Import Popup -->
+  <div id="quizlet-import-popup" class="popup hidden">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h2 class="popup-title">Import Quizlet Deck</h2>
+        <span class="popup-close" onclick="closeQuizletImportPopup()">&times;</span>
+      </div>
+      <div class="popup-content">
+        <div class="import-instructions">
+          <p><strong>How to import:</strong></p>
+          <ol>
+            <li>Go to your Quizlet set</li>
+            <li>Click "Export" (three dots menu)</li>
+            <li>Choose "Copy text"</li>
+            <li>Paste below and click "Parse & Preview"</li>
+          </ol>
+        </div>
+        
+        <textarea id="quizlet-text" placeholder="Paste your Quizlet export text here..." rows="8"></textarea>
+        
+        <div class="import-options">
+          <div class="import-mode">
+            <label><strong>Import Mode:</strong></label>
+            <label><input type="radio" name="import-mode" value="auto-detect" checked> Auto-detect dates/numbers</label>
+            <label><input type="radio" name="import-mode" value="quizlet-order"> Use Quizlet order (1, 2, 3...)</label>
+          </div>
+          
+          <div class="order-options" id="order-options" style="display: none;">
+            <label><strong>Card Name Source:</strong></label>
+            <label><input type="radio" name="card-name-source" value="term" checked> Use Term as card name</label>
+            <label><input type="radio" name="card-name-source" value="definition"> Use Definition as card name</label>
+          </div>
+        </div>
+        
+        <button id="parse-button" onclick="parseQuizletText()">Parse & Preview</button>
+        
+        <div id="preview-section" style="display: none;">
+          <h3>Preview (first 3 cards):</h3>
+          <div id="preview-cards"></div>
+          
+          <div class="deck-name-input">
+            <label for="deck-name"><strong>Deck Name:</strong></label>
+            <input type="text" id="deck-name" placeholder="Enter deck name..." value="Custom Deck">
+          </div>
+          
+          <div class="button-holder">
+            <button id="import-button" onclick="importQuizletDeck()">Import Deck</button>
+            <button onclick="closeQuizletImportPopup()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="popup" class="popup hidden">
     <div class="popup-box">
