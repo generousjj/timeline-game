@@ -1857,6 +1857,6 @@ body.dark-mode .deck-name-input input:focus {
   .import-button {
     margin-left: 0;
     margin-top: 0.5rem;
-    width: 100%;
+    width: auto;
   }
 } 

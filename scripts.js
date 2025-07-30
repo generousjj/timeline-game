@@ -925,11 +925,15 @@ themeToggle.addEventListener('click', () => {
 
 
 window.addEventListener('beforeunload', (e) => {
-  if (hasInteracted) {
+  console.log('beforeunload triggered, playedCards.size:', playedCards.size);
+  if (playedCards.size > 0) {
+    console.log('Preventing unload');
     e.preventDefault();
     e.returnValue = '';
   }
 });
+
+
 
 function closePopup() {
   popupDiv.classList.add('hidden');
@@ -1058,6 +1062,7 @@ function handleCardPlacement(cardId) {
   // Mark the card as played
   if (cardId) {
     playedCards.add(cardId);
+    console.log('Card placed! playedCards.size:', playedCards.size, 'cardId:', cardId);
   }
   
   // Remove current card from unplayed
