@@ -445,12 +445,7 @@ function restart() {
   let url = new URL(window.location.href);
   const currentPage = window.location.pathname;
   
-  // Reload the page
-  if (document.body.classList.contains('dark-mode')) {
-    url.searchParams.set('dark', 'enabled');
-  } else {
-    url.searchParams.set('dark', 'disabled');
-  }
+  // Reload the page (theme is handled by localStorage, no need for URL param)
   url.pathname = currentPage;
   window.location.href = url.href;
 
@@ -462,14 +457,8 @@ function newSubject() {
 
   let url = new URL(window.location.href.split('?')[0]);
   
-  // Reload the page
-  if (document.body.classList.contains('dark-mode')) {
-    url.searchParams.set('dark', 'enabled');
-    window.location.href = url.href;
-  } else {
-    url.searchParams.set('dark', 'disabled');
-    window.location.href = url.href;
-  }
+  // Reload the page (theme is handled by localStorage, no need for URL param)
+  window.location.href = url.href;
 }
 
 function hideMessageBox(duration) {
