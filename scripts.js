@@ -10,11 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (flashcardsParam) {
     // Reset all game state variables
-    currentCardIndex = 0;
-    cardDeck = [];
+    unplayedCards = [];
     skippedCards = [];
     playedCards.clear();
-    currentCardId = null;
+    currentCard = null;
     hasInteracted = false;
     isCheckResultsCalled = false;
     hasShownResults = false;
@@ -126,12 +125,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 
 let draggedCard = null;
-let currentCardIndex = 0;
-let cardDeck = [...flashcards];
+let unplayedCards = [];        // Main deck of unplayed cards (randomly ordered)
+let skippedCards = [];         // LIFO stack of skipped cards
+let playedCards = new Set();   // Set of card IDs that have been placed
+let currentCard = null;        // Currently displayed card
 let hasInteracted = false;
-let skippedCards = []; // Track skipped cards for back functionality
-let playedCards = new Set(); // Track cards that have been placed in timeline
-let currentCardId = null; // Track the currently displayed card ID
 
 // Creator attribution mapping
 const creatorMapping = {
@@ -159,80 +157,101 @@ function shuffle(array) {
   return array;
 }
 
-// Helper function to check if a card is available to be drawn
-function isCardAvailable(cardId) {
-  return cardId !== currentCardId && !playedCards.has(cardId);
+// Legacy functions - no longer used in new system
+// Keeping for reference but these should not be called
+
+// Helper function to count total available cards (unplayed + skipped)
+function getAvailableCardCount() {
+  const total = unplayedCards.length + skippedCards.length;
+  console.log('getAvailableCardCount():', total, '(unplayed:', unplayedCards.length, 'skipped:', skippedCards.length, ')');
+  return total;
 }
 
-// Helper function to find the next available card index
-function findNextAvailableCard(startIndex) {
-  for (let i = startIndex; i < cardDeck.length; i++) {
-    if (isCardAvailable(cardDeck[i].id)) {
-      return i;
-    }
+// Helper function to check if there are any cards left to play
+function hasCardsLeft() {
+  const result = getAvailableCardCount() > 0;
+  console.log('hasCardsLeft():', result);
+  return result;
+}
+
+// Helper function to get the next card to display
+function getNextCard() {
+  // If no unplayed cards, move skipped cards to unplayed
+  if (unplayedCards.length === 0 && skippedCards.length > 0) {
+    console.log('Moving skipped cards to unplayed');
+    unplayedCards = [...skippedCards];
+    skippedCards = [];
   }
-  return -1; // No available cards found
+  
+  // Return first card from unplayed, or null if none
+  return unplayedCards.length > 0 ? unplayedCards[0] : null;
+}
+
+// Helper function to remove current card from unplayed
+function removeCurrentCard() {
+  if (unplayedCards.length > 0) {
+    unplayedCards.shift(); // Remove first card
+  }
 }
 
 function drawCard() {
-  if (currentCardIndex >= cardDeck.length) {
+  console.log('drawCard() called');
+  console.log('unplayedCards.length:', unplayedCards.length);
+  console.log('skippedCards.length:', skippedCards.length);
+  console.log('playedCards.size:', playedCards.size);
+  
+  // Get the next card to display
+  const nextCard = getNextCard();
+  
+  if (!nextCard) {
+    // No more cards available
+    console.log('No more cards available');
     skipBtn.disabled = true;
-    //checkResults();
+    const currentCardDiv = document.getElementById('current-card');
+    currentCardDiv.innerHTML = '<div class="no-cards-message">No more cards available</div>';
+    currentCard = null;
     return;
   }
-
-  let cardData = cardDeck[currentCardIndex];
   
-  // Check if this card is already being shown or has been played
-  if (!isCardAvailable(cardData.id)) {
-    // Find the next available card
-    const nextIndex = findNextAvailableCard(currentCardIndex + 1);
-    
-    if (nextIndex === -1) {
-      // No more cards available
-      skipBtn.disabled = true;
-      return;
-    }
-    
-    currentCardIndex = nextIndex;
-    cardData = cardDeck[currentCardIndex];
-  }
+  console.log('Found next card:', nextCard.name);
   
   const currentCardDiv = document.getElementById('current-card');
 
   // Clear the current card area
   currentCardDiv.innerHTML = '';
 
-  newCard = document.createElement('div');
-  newCard.textContent = cardData.name;
-  newCard.dataset.date = cardData.date;
-  newCard.dataset.cardId = cardData.id; // Store the card ID
+  const newCard = document.createElement('div');
+  newCard.textContent = nextCard.name;
+  newCard.dataset.date = nextCard.date;
+  newCard.dataset.cardId = nextCard.id; // Store the card ID
   newCard.style.visibility = 'visible';
   newCard.classList.add('card', 'top-card');
   setupCardEvents(newCard);
   currentCardDiv.appendChild(newCard);
   
-  // Set current card ID
-  currentCardId = cardData.id;
+  // Set current card
+  currentCard = nextCard;
   
-  // Check if this card was previously skipped and remove it from skippedCards
-  const skippedIndex = skippedCards.findIndex(skippedCard => 
-    skippedCard.id === cardData.id
-  );
+  console.log('New card displayed:', nextCard.name, 'ID:', nextCard.id);
   
-  if (skippedIndex !== -1) {
-    skippedCards.splice(skippedIndex, 1);
-    // Disable back button if no more skipped cards
-    if (skippedCards.length === 0) {
-      document.querySelector('.back-button').disabled = true;
-    }
-  }
-  
-  // Disable skip button if this is the last card
-  if (currentCardIndex >= cardDeck.length - 1) {
+  // Update skip button state based on available cards
+  const availableCount = getAvailableCardCount();
+  if (availableCount <= 1) {
     skipBtn.disabled = true;
   } else {
     skipBtn.disabled = false;
+  }
+}
+
+// Safety function to ensure a card is always shown when there should be one
+function ensureCardIsShown() {
+  const currentCardDiv = document.getElementById('current-card');
+  const hasCardShown = currentCardDiv.children.length > 0;
+  const hasAvailableCards = hasCardsLeft();
+  
+  // If no card is shown but there should be cards available, draw one
+  if (!hasCardShown && hasAvailableCards) {
+    drawCard();
   }
 }
 
@@ -242,7 +261,7 @@ function updateCheckResultsButton() {
     child.classList.contains('card')
   );
   const hasPlacedCards = actualCards.length > 0;
-  const hasCardsLeft = currentCardIndex < cardDeck.length;
+  const cardsLeft = hasCardsLeft(); // Use the new helper function
   const placedCardsCount = actualCards.length;
   
   // Only enable if there are at least 2 cards placed
@@ -250,7 +269,7 @@ function updateCheckResultsButton() {
     checkResultsButton.disabled = false;
     
     // Add shine animation if all cards are placed (no cards left in deck)
-    if (!hasCardsLeft) {
+    if (!cardsLeft) {
       checkResultsButton.classList.add('shine');
     } else {
       checkResultsButton.classList.remove('shine');
@@ -378,14 +397,12 @@ function onMouseUp(e) {
       if (draggedCard.parentNode === currentCardDiv) {
         drawCard();
       } else {
-        // Mark the card as played
+        // Handle card placement and cleanup
         const cardId = draggedCard.dataset.cardId;
-        if (cardId) {
-          playedCards.add(cardId);
-        }
+        handleCardPlacement(cardId);
         
-        currentCardIndex++; // Add this line to increment the index when a card is placed
-        drawCard(); // Add this line to draw a new card when a card is placed
+        // Handle next card - new system handles this automatically
+        drawCard();
       }
     }
 
@@ -395,6 +412,9 @@ function onMouseUp(e) {
     document.removeEventListener('mouseup', onMouseUp);
 
     placeholder.style.width = '';
+
+    // Safety check to ensure a card is shown
+    setTimeout(ensureCardIsShown, 100);
 
   }
 }
@@ -446,6 +466,15 @@ function hideMessageBox(duration) {
       messageBox.classList.remove('fade-out');
     }, 1000);
   }, duration);
+}
+
+function showMessage(message) {
+  const messageText = document.getElementById('message-text');
+  if (messageText) {
+    messageText.textContent = message;
+    messageBox.classList.remove('hidden');
+    hideMessageBox(3000); // Hide after 3 seconds
+  }
 }
 
 
@@ -561,7 +590,7 @@ function resumeGame() {
   sortableInstance.option("disabled", false);
   
   // Re-enable skip button if there are cards left
-  if (currentCardIndex < cardDeck.length) {
+  if (hasCardsLeft() && getAvailableCardCount() > 1) {
     skipBtn.disabled = false;
   }
   
@@ -675,9 +704,9 @@ function checkResults() {
   }
   
   // Check if there are cards left in the deck
-  const hasCardsLeft = currentCardIndex < cardDeck.length;
+  const cardsLeft = hasCardsLeft();
   
-  if (hasCardsLeft && !hasShownResults) {
+  if (cardsLeft && !hasShownResults) {
     // Show confirmation popup for incomplete game only if results haven't been shown yet
     showConfirmPopup();
     return;
@@ -809,20 +838,30 @@ function toggleDarkMode() {
 
 
 skipBtn.addEventListener('click', () => {
-  // Don't allow skipping if this is the last card
-  if (currentCardIndex >= cardDeck.length - 1) {
+  console.log('Skip button clicked');
+  console.log('hasCardsLeft():', hasCardsLeft());
+  console.log('getAvailableCardCount():', getAvailableCardCount());
+  console.log('currentCard:', currentCard ? currentCard.name : 'null');
+  console.log('unplayedCards.length:', unplayedCards.length);
+  console.log('skippedCards.length:', skippedCards.length);
+  console.log('playedCards.size:', playedCards.size);
+  
+  // Don't allow skipping if there are no more available cards
+  if (!hasCardsLeft() || getAvailableCardCount() <= 1) {
+    console.log('Skip blocked - no cards left or only 1 card available');
     return;
   }
   
-  // Store the skipped card with ID
-  const skippedCardData = {
-    name: newCard.textContent,
-    date: newCard.dataset.date,
-    id: newCard.dataset.cardId
-  };
-  skippedCards.push(skippedCardData);
+  // Store the current card as skipped (LIFO stack)
+  skippedCards.push(currentCard);
   
-  currentCardIndex++;
+  console.log('Card skipped:', currentCard.name);
+  console.log('Skipped cards now:', skippedCards.length);
+  
+  // Remove current card from unplayed
+  removeCurrentCard();
+  
+  // Find and show the next available card
   drawCard();
   hasInteracted = true;
   
@@ -921,25 +960,89 @@ function goBack() {
     return;
   }
   
-  // Get the last skipped card
+  // Get the last skipped card (LIFO - Last In, First Out)
   const lastSkippedCard = skippedCards.pop();
   
-  // Remove the card from played cards if it was there
-  playedCards.delete(lastSkippedCard.id);
+  console.log('Going back to card:', lastSkippedCard.name);
   
-  // Insert the skipped card back at the current position
-  cardDeck.splice(currentCardIndex, 0, lastSkippedCard);
+  // Add the card back to the front of unplayed cards
+  unplayedCards.unshift(lastSkippedCard);
   
-  // Redraw the card (this will show the restored card)
-  drawCard();
+  // Show the specific card that was skipped
+  showSpecificCard(lastSkippedCard);
+  
+  // Update current card
+  currentCard = lastSkippedCard;
+  
+  // Re-enable skip button if there are multiple cards
+  if (getAvailableCardCount() > 1) {
+    skipBtn.disabled = false;
+  }
   
   // Disable back button if no more skipped cards
   if (skippedCards.length === 0) {
     document.querySelector('.back-button').disabled = true;
   }
+}
+
+// Function to show a specific card (for back/forward functionality)
+function showSpecificCard(cardData) {
+  console.log('showSpecificCard called with:', cardData.name);
+  const currentCardDiv = document.getElementById('current-card');
   
-  // Show a message
-  showMessage('Card restored!');
+  // Clear the current card area
+  currentCardDiv.innerHTML = '';
+  
+  // Create the card element
+  const newCard = document.createElement('div');
+  newCard.textContent = cardData.name;
+  newCard.dataset.date = cardData.date;
+  newCard.dataset.cardId = cardData.id;
+  newCard.style.visibility = 'visible';
+  newCard.classList.add('card', 'top-card');
+  setupCardEvents(newCard);
+  currentCardDiv.appendChild(newCard);
+  
+  // Set current card
+  currentCard = cardData;
+  console.log('Specific card displayed:', cardData.name, 'ID:', cardData.id);
+}
+
+// Function to handle card placement and ensure proper cleanup
+function handleCardPlacement(cardId) {
+  // Mark the card as played
+  if (cardId) {
+    playedCards.add(cardId);
+  }
+  
+  // Remove current card from unplayed
+  removeCurrentCard();
+  
+  // Find and show the next available card
+  drawCard();
+}
+
+function goForward() {
+  if (unplayedCards.length === 0) {
+    return;
+  }
+  
+  // Get the first card from unplayed (the current card)
+  const currentCardToSkip = unplayedCards[0];
+  
+  console.log('Going forward, re-skipping card:', currentCardToSkip.name);
+  
+  // Add the card back to skipped cards
+  skippedCards.push(currentCardToSkip);
+  
+  // Remove the card from unplayed
+  removeCurrentCard();
+  
+  // Find and show the next available card
+  drawCard();
+  
+  // Enable back button
+  document.querySelector('.back-button').disabled = false;
 }
 
 function updateCreatorAttribution(flashcardSet) {
@@ -982,7 +1085,8 @@ document.getElementById('resume-button').addEventListener('click', () => {
 
 document.getElementById('check-results-button').onclick = checkResults;
 
-cardDeck = shuffle(cardDeck);
+// Initialize the game with shuffled cards (using test flashcards)
+unplayedCards = shuffle([...flashcards]);
 drawCard();
 
 
@@ -1009,11 +1113,19 @@ document.querySelector('.card-area').style.display = 'none';
 // Hide game elements initially
 document.querySelector('.current-card').style.display = 'none';
 document.querySelector('.back-button').style.display = 'none';
+document.querySelector('.forward-button').style.display = 'none';
 
 // Add event listeners to the subject selector and load game button
 const subjectSelector = document.getElementById('subject');
 const subjectDiv = document.getElementById('subject-selector');
 const loadGameButton = document.getElementById('load-game-button');
+
+// Periodic safety check to ensure cards are always shown when they should be
+setInterval(() => {
+  if (deck.style.display !== 'none' && !isCheckResultsCalled) {
+    ensureCardIsShown();
+  }
+}, 2000); // Check every 2 seconds
 
 // Add event listener for subject selector change
 if (subjectSelector) {
@@ -1062,11 +1174,9 @@ async function loadGame(flashcardSetName) {
       id: `${selectedSubject}_${index}_${card.name.replace(/\s+/g, '_')}_${card.date}`
     }));
     
-    cardDeck = shuffle([...cardsWithIds]);
-    currentCardIndex = 0;
+    unplayedCards = shuffle([...cardsWithIds]);
     skippedCards = []; // Reset skipped cards
     playedCards.clear(); // Reset played cards tracking
-    currentCardId = null; // Reset current card ID
 
     // Show the Skip button, card deck, and card area
     skipBtn.style.display = 'block';
@@ -1097,7 +1207,7 @@ async function loadGame(flashcardSetName) {
     drawCard();
     
     // Enable skip button if there are multiple cards
-    if (cardDeck.length > 1) {
+    if (unplayedCards.length > 1) {
       skipBtn.disabled = false;
     }
     
@@ -1142,11 +1252,9 @@ loadGameButton.addEventListener('click', async () => {
       id: `${selectedSubject}_${index}_${card.name.replace(/\s+/g, '_')}_${card.date}`
     }));
     
-    cardDeck = shuffle([...cardsWithIds]);
-    currentCardIndex = 0;
+    unplayedCards = shuffle([...cardsWithIds]);
     skippedCards = []; // Reset skipped cards
     playedCards.clear(); // Reset played cards tracking
-    currentCardId = null; // Reset current card ID
 
     // Show the Skip button, card deck, and card area
     skipBtn.style.display = 'block';
@@ -1176,8 +1284,8 @@ loadGameButton.addEventListener('click', async () => {
 
     drawCard();
     
-    // Enable skip button if there are multiple cards
-    if (cardDeck.length > 1) {
+    // Enable skip button if there are multiple available cards
+    if (getAvailableCardCount() > 1) {
       skipBtn.disabled = false;
     }
     
