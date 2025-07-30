@@ -426,11 +426,14 @@ function onMouseUp(e) {
         cardContainer.appendChild(draggedCard);
       }
 
-      // Ensure scroll spacer exists (it's absolutely positioned, so just check/create)
+      // Ensure scroll spacer exists and is at the end
       let scrollSpacer = cardContainer.querySelector('.scroll-spacer');
       if (!scrollSpacer) {
         scrollSpacer = document.createElement('div');
         scrollSpacer.className = 'scroll-spacer';
+      }
+      // Move scroll spacer to the end if it's not already there
+      if (scrollSpacer.parentNode !== cardContainer || scrollSpacer.nextSibling !== null) {
         cardContainer.appendChild(scrollSpacer);
       }
 
@@ -1208,23 +1211,31 @@ async function loadGame(flashcardSetName) {
   const selectedSubject = flashcardSetName;
   const newFlashcards = await loadFlashcards(selectedSubject);
 
-  ///fix
+  // Clean up URL parameters and ensure only flashcards parameter is used
   const params = new URLSearchParams(window.location.search);
-  if (!params.has('flashcards')) {
-    let stateObj = { id: "100" };
-    const separator = window.location.href.includes('?') ? '&' : '?';
-    window.history.pushState(stateObj,
-        "Page", window.location.href+separator+"flashcards="+selectedSubject);
+  
+  // Remove any non-essential parameters (keep only flashcards and dark)
+  const essentialParams = ['flashcards', 'dark'];
+  for (const [key] of params.entries()) {
+    if (!essentialParams.includes(key)) {
+      params.delete(key);
+    }
   }
+  
+  // Add flashcards parameter if not present
+  if (!params.has('flashcards')) {
+    params.set('flashcards', selectedSubject);
+  }
+  
+  // Update URL with clean parameters
+  const newUrl = new URL(window.location);
+  newUrl.search = params.toString();
+  window.history.replaceState({}, "Page", newUrl.toString());
 
   // Reset UI state
   const cardContainer = document.querySelector('.card-container');
   if (cardContainer) {
     cardContainer.innerHTML = '';
-    // Add scroll spacer
-    const scrollSpacer = document.createElement('div');
-    scrollSpacer.className = 'scroll-spacer';
-    cardContainer.appendChild(scrollSpacer);
   }
   
   // Reset placeholder
@@ -1294,6 +1305,20 @@ async function loadGame(flashcardSetName) {
       currentCard: document.querySelector('.current-card').style.display,
       backButton: document.querySelector('.back-button').style.display
     });
+    
+    // Ensure scroll spacer exists and is at the end of the card container
+    const cardContainer = document.querySelector('.card-container');
+    if (cardContainer) {
+      let scrollSpacer = cardContainer.querySelector('.scroll-spacer');
+      if (!scrollSpacer) {
+        scrollSpacer = document.createElement('div');
+        scrollSpacer.className = 'scroll-spacer';
+      }
+      // Move scroll spacer to the end if it's not already there
+      if (scrollSpacer.parentNode !== cardContainer || scrollSpacer.nextSibling !== null) {
+        cardContainer.appendChild(scrollSpacer);
+      }
+    }
   }
 }
 
@@ -1307,13 +1332,26 @@ loadGameButton.addEventListener('click', async () => {
   const selectedSubject = subjectSelector ? subjectSelector.value : '';
   const newFlashcards = await loadFlashcards(selectedSubject);
 
+  // Clean up URL parameters and ensure only flashcards parameter is used
   const params = new URLSearchParams(window.location.search);
-  if (!params.has('flashcards')) {
-    let stateObj = { id: "100" };
-    const separator = window.location.href.includes('?') ? '&' : '?';
-    window.history.pushState(stateObj,
-        "Page", window.location.href+separator+"flashcards="+selectedSubject);
+  
+  // Remove any non-essential parameters (keep only flashcards and dark)
+  const essentialParams = ['flashcards', 'dark'];
+  for (const [key] of params.entries()) {
+    if (!essentialParams.includes(key)) {
+      params.delete(key);
+    }
   }
+  
+  // Add flashcards parameter if not present
+  if (!params.has('flashcards')) {
+    params.set('flashcards', selectedSubject);
+  }
+  
+  // Update URL with clean parameters
+  const newUrl = new URL(window.location);
+  newUrl.search = params.toString();
+  window.history.replaceState({}, "Page", newUrl.toString());
   
   if (newFlashcards) {
     flashcards.length = 0;

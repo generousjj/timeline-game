@@ -270,15 +270,11 @@ body {
 }
 
 .scroll-spacer {
-  height: 8rem;
+  height: 6rem;
   width: 100%;
   flex-shrink: 0;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
   pointer-events: none;
-  z-index: -1;
+  /* Remove absolute positioning to make it part of normal flow */
 }
 
 @media (min-width: 769px) {
@@ -295,7 +291,7 @@ body {
   max-width: 500px;
   min-height: 200px;
   padding: 1rem 0;
-  position: relative;
+  /* Remove position: relative since scroll spacer is no longer absolute */
 }
 
 /* Cards */
@@ -1426,7 +1422,7 @@ body.dark-mode .custom-select:focus {
   .container {
     flex-direction: column;
     height: 100vh;
-    margin-top: 4rem;
+    margin-top: 0;
   }
   
   .subject-selector {
@@ -1462,7 +1458,7 @@ body.dark-mode .custom-select:focus {
   
   .card-area {
     width: 100%;
-    height: calc(100vh - 12rem);
+    height: calc(100vh - 16rem); /* Account for logo banner (4rem) + deck area (4rem) + extra space */
     padding: 0.5rem;
   }
   
@@ -1558,6 +1554,11 @@ body.dark-mode .custom-select:focus {
   body.dark-mode .subject-selector,
   body.dark-mode .deck {
     border-bottom-color: #374151;
+  }
+  
+  /* Dark mode mobile deck positioning */
+  body.dark-mode .deck {
+    margin-top: 4rem; /* Account for logo section height */
   }
   
   /* Dark mode mobile logo section */
