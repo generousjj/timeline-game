@@ -1537,12 +1537,12 @@ function parseQuizletExport(text, mode, cardNameSource = 'term') {
         cardName = term;
         cardDate = defNumber;
       } else {
-        // Skip cards without valid dates/numbers
+        // Skip cards without valid dates/numbers - don't parse them at all
         skippedCards++;
         continue;
       }
     } else {
-      // Quizlet order mode
+      // Quizlet order mode (default)
       cardName = cardNameSource === 'term' ? term : definition;
       cardDate = cards.length + 1; // 1, 2, 3, etc.
     }
@@ -1553,7 +1553,7 @@ function parseQuizletExport(text, mode, cardNameSource = 'term') {
     });
   }
   
-  if (skippedCards > 0) {
+  if (mode === 'auto-detect' && skippedCards > 0) {
     showMessage(`Skipped ${skippedCards} cards that don't have valid dates/numbers.`);
   }
   
@@ -1789,6 +1789,9 @@ document.addEventListener('DOMContentLoaded', function() {
   importModeRadios.forEach(radio => {
     radio.addEventListener('change', updateOrderOptionsVisibility);
   });
+  
+  // Initialize order options visibility (Quizlet order is default)
+  updateOrderOptionsVisibility();
   
   // Load custom deck from URL if present
   if (loadCustomDeckFromURL()) {
