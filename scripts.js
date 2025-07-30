@@ -357,26 +357,42 @@ function onMouseMove(e) {
     return;
   }
 
-  const closestCard = Array.from(cardContainer.children)
-    .filter(child => child !== draggedCard && child !== placeholder)
-    .reduce((closest, child) => {
-      const childRect = child.getBoundingClientRect();
-      const offset = y - childRect.top - childRect.height / 2;
+  const cardChildren = Array.from(cardContainer.children)
+    .filter(child => child !== draggedCard && child !== placeholder && !child.classList.contains('scroll-spacer'));
+  
+  const closestCard = cardChildren.reduce((closest, child) => {
+    const childRect = child.getBoundingClientRect();
+    const offset = y - childRect.top - childRect.height / 2;
 
-      if (offset < 0 && offset > closest.offset) {
-        return {offset, element: child};
-      } else {
-        return closest;
-      }
-    }, {offset: Number.NEGATIVE_INFINITY});
+    if (offset < 0 && offset > closest.offset) {
+      return {offset, element: child};
+    } else {
+      return closest;
+    }
+  }, {offset: Number.NEGATIVE_INFINITY});
 
   const placeholderRect = placeholder.getBoundingClientRect();
   placeholder.style.height = `${draggedCard.offsetHeight / 2}px`;
   placeholder.style.width = `${draggedCard.offsetWidth}px`;
 
-
-  if (placeholder.nextSibling !== closestCard.element) {
-    cardContainer.insertBefore(placeholder, closestCard.element);
+  if (closestCard.element) {
+    // Place before the closest card
+    if (placeholder.nextSibling !== closestCard.element) {
+      cardContainer.insertBefore(placeholder, closestCard.element);
+    }
+  } else {
+    // No closest card found, place at the end (before scroll spacer)
+    const scrollSpacer = cardContainer.querySelector('.scroll-spacer');
+    if (scrollSpacer) {
+      if (placeholder.nextSibling !== scrollSpacer) {
+        cardContainer.insertBefore(placeholder, scrollSpacer);
+      }
+    } else {
+      // If no scroll spacer, just append to the end
+      if (placeholder.parentNode !== cardContainer) {
+        cardContainer.appendChild(placeholder);
+      }
+    }
   }
 }
 
@@ -401,17 +417,20 @@ function onMouseUp(e) {
       }
     } else {
       cardArea.removeChild(draggedCard);
-      const newIndex = Array.from(cardContainer.children).indexOf(placeholder);
-      cardContainer.insertBefore(draggedCard, newIndex === -1 ? null : cardContainer.children[newIndex]);
+      
+      // Insert the dragged card at the placeholder position
+      if (placeholder.parentNode === cardContainer) {
+        cardContainer.insertBefore(draggedCard, placeholder);
+      } else {
+        // Fallback: append to the end
+        cardContainer.appendChild(draggedCard);
+      }
 
-      // Add scroll spacer if it doesn't exist (at the end)
+      // Ensure scroll spacer exists (it's absolutely positioned, so just check/create)
       let scrollSpacer = cardContainer.querySelector('.scroll-spacer');
       if (!scrollSpacer) {
         scrollSpacer = document.createElement('div');
         scrollSpacer.className = 'scroll-spacer';
-        cardContainer.appendChild(scrollSpacer);
-      } else {
-        // Move existing spacer to the end
         cardContainer.appendChild(scrollSpacer);
       }
 
@@ -1143,6 +1162,7 @@ const sortableInstance = Sortable.create(cardContainer, {
   fallbackClass: 'sortable-fallback',
   swap: false,
   swapThreshold: 0.5,
+  filter: '.scroll-spacer',
   onAdd: updateCheckResultsButton,
   onUpdate: updateCheckResultsButton,
   onEnd: updateCheckResultsButton,

@@ -273,6 +273,12 @@ body {
   height: 8rem;
   width: 100%;
   flex-shrink: 0;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: -1;
 }
 
 @media (min-width: 769px) {
@@ -289,6 +295,7 @@ body {
   max-width: 500px;
   min-height: 200px;
   padding: 1rem 0;
+  position: relative;
 }
 
 /* Cards */
