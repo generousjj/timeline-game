@@ -1480,11 +1480,33 @@ function closeQuizletImportPopup() {
 function updateOrderOptionsVisibility() {
   const activeMode = document.querySelector('.mode-option.active').dataset.mode;
   const orderOptions = document.getElementById('order-options');
+  const quizletSubOptions = document.getElementById('quizlet-sub-options');
   
   if (activeMode === 'quizlet-pairs') {
+    quizletSubOptions.style.display = 'block';
     orderOptions.style.display = 'block';
   } else {
+    quizletSubOptions.style.display = 'none';
     orderOptions.style.display = 'none';
+  }
+  
+  // Also update placeholder text
+  updatePlaceholderText();
+  
+  // Update card name source visibility based on date handling
+  updateCardNameSourceVisibility();
+}
+
+function updateCardNameSourceVisibility() {
+  const orderOptions = document.getElementById('order-options');
+  const dateHandling = document.querySelector('input[name="date-handling"]:checked');
+  
+  if (dateHandling && dateHandling.value === 'detect') {
+    // Hide card name source options when date detection is enabled
+    orderOptions.style.display = 'none';
+  } else if (document.querySelector('.mode-option.active').dataset.mode === 'quizlet-pairs') {
+    // Show card name source options when sequential order is selected
+    orderOptions.style.display = 'block';
   }
 }
 
@@ -1502,14 +1524,36 @@ function initializeModeSelector() {
       
       // Update order options visibility
       updateOrderOptionsVisibility();
+      
+      // Update placeholder text
+      updatePlaceholderText();
     });
   });
+  
+  // Add event listeners for date handling radio buttons
+  const dateHandlingOptions = document.querySelectorAll('input[name="date-handling"]');
+  dateHandlingOptions.forEach(option => {
+    option.addEventListener('change', () => {
+      updateCardNameSourceVisibility();
+    });
+  });
+}
+
+function updatePlaceholderText() {
+  const activeMode = document.querySelector('.mode-option.active').dataset.mode;
+  const textarea = document.getElementById('quizlet-text');
+  
+  if (activeMode === 'quizlet-pairs') {
+    textarea.placeholder = 'Paste your exported Quizlet text here...';
+  } else {
+    textarea.placeholder = 'Paste your list here...';
+  }
 }
 
 function parseQuizletText() {
   const text = document.getElementById('quizlet-text').value.trim();
   if (!text) {
-    showMessage('Please paste some Quizlet text first.');
+    showMessage('Please paste some text first.');
     return;
   }
 
@@ -1520,13 +1564,13 @@ function parseQuizletText() {
     const cards = parseQuizletExport(text, importMode, cardNameSource);
     
     if (cards.length === 0) {
-      showMessage('No valid cards found. Please check your Quizlet export format.');
+      showMessage('No valid cards found. Please check your input format.');
       return;
     }
     
     showQuizletPreview(cards);
   } catch (error) {
-    showMessage('Error parsing Quizlet text: ' + error.message);
+    showMessage('Error parsing text: ' + error.message);
   }
 }
 
@@ -1535,60 +1579,117 @@ function parseQuizletExport(text, mode, cardNameSource = 'term') {
   const cards = [];
   let skippedCards = 0;
   
-  if (mode === 'auto-detect') {
-    // Handle Quizlet format (term/definition pairs) for auto-detect mode
-    for (let i = 0; i < lines.length; i += 2) {
-      if (i + 1 >= lines.length) break;
+  if (mode === 'quizlet-pairs') {
+    // Get the date handling preference
+    const dateHandling = document.querySelector('input[name="date-handling"]:checked').value;
+    
+    // Handle Quizlet format
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
       
-      const term = lines[i].trim();
-      const definition = lines[i + 1].trim();
-      
-      if (!term || !definition) {
+      if (!line) {
         skippedCards++;
         continue;
       }
       
-      // Try to extract a number from either term or definition
-      const termNumber = extractNumber(term);
-      const defNumber = extractNumber(definition);
-      
-      if (termNumber !== null && isYear(termNumber)) {
-        cards.push({
-          name: definition,
-          date: termNumber
-        });
-      } else if (defNumber !== null && isYear(defNumber)) {
-        cards.push({
-          name: term,
-          date: defNumber
-        });
+      // Check if line contains tab-separated values
+      if (line.includes('\t')) {
+        const parts = line.split('\t');
+        if (parts.length >= 2) {
+          const firstPart = parts[0].trim();
+          const secondPart = parts[1].trim();
+          
+          if (dateHandling === 'detect') {
+            // Try to extract a number from either part
+            const firstNumber = extractNumber(firstPart);
+            const secondNumber = extractNumber(secondPart);
+            
+            if (firstNumber !== null && isYear(firstNumber)) {
+              // First part has the date, use second part as card name
+              cards.push({
+                name: secondPart,
+                date: firstNumber
+              });
+            } else if (secondNumber !== null && isYear(secondNumber)) {
+              // Second part has the date, use first part as card name
+              cards.push({
+                name: firstPart,
+                date: secondNumber
+              });
+            } else {
+              // No valid date found, use sequential numbering
+              cards.push({
+                name: cardNameSource === 'term' ? firstPart : secondPart,
+                date: cards.length + 1 // 1, 2, 3, etc.
+              });
+            }
+          } else {
+            // Use sequential numbering
+            cards.push({
+              name: cardNameSource === 'term' ? firstPart : secondPart,
+              date: cards.length + 1 // 1, 2, 3, etc.
+            });
+          }
+        } else {
+          skippedCards++;
+        }
       } else {
-        // Skip cards without valid dates/numbers
-        skippedCards++;
-        continue;
+        // Handle traditional term/definition pairs (every other line)
+        if (i + 1 < lines.length) {
+          const term = line;
+          const definition = lines[i + 1].trim();
+          
+          if (!definition) {
+            skippedCards++;
+            continue;
+          }
+          
+          if (dateHandling === 'detect') {
+            // Try to extract a number from either term or definition
+            const termNumber = extractNumber(term);
+            const defNumber = extractNumber(definition);
+            
+            if (termNumber !== null && isYear(termNumber)) {
+              // Term has the date, use definition as card name
+              cards.push({
+                name: definition,
+                date: termNumber
+              });
+            } else if (defNumber !== null && isYear(defNumber)) {
+              // Definition has the date, use term as card name
+              cards.push({
+                name: term,
+                date: defNumber
+              });
+            } else {
+              // No valid date found, use sequential numbering
+              cards.push({
+                name: cardNameSource === 'term' ? term : definition,
+                date: cards.length + 1 // 1, 2, 3, etc.
+              });
+            }
+          } else {
+            // Use sequential numbering
+            cards.push({
+              name: cardNameSource === 'term' ? term : definition,
+              date: cards.length + 1 // 1, 2, 3, etc.
+            });
+          }
+          
+          // Skip the next line since we processed it
+          i++;
+        } else {
+          // Single line without a pair, treat as sequential
+          cards.push({
+            name: line,
+            date: cards.length + 1
+          });
+        }
       }
     }
     
     if (skippedCards > 0) {
-      showMessage(`Skipped ${skippedCards} cards that don't have valid dates/numbers.`);
-    }
-  } else if (mode === 'quizlet-pairs') {
-    // Handle Quizlet format (term/definition pairs) with sequential numbering
-    for (let i = 0; i < lines.length; i += 2) {
-      if (i + 1 >= lines.length) break;
-      
-      const term = lines[i].trim();
-      const definition = lines[i + 1].trim();
-      
-      if (!term || !definition) {
-        skippedCards++;
-        continue;
-      }
-      
-      cards.push({
-        name: cardNameSource === 'term' ? term : definition,
-        date: cards.length + 1 // 1, 2, 3, etc.
-      });
+      showMessage(`Skipped ${skippedCards} invalid cards.`);
     }
   } else {
     // Default: simple list mode - each line is a separate card
@@ -1619,8 +1720,8 @@ function extractNumber(text) {
 }
 
 function isYear(num) {
-  // Consider numbers between 1000 and 2100 as years
-  return num >= 1000 && num <= 2100;
+  // Accept any positive number as a valid date/number
+  return num > 0;
 }
 
 function showQuizletPreview(cards) {
@@ -1641,7 +1742,7 @@ function showQuizletPreview(cards) {
 
 function importQuizletDeck() {
   const text = document.getElementById('quizlet-text').value.trim();
-  const importMode = document.querySelector('input[name="import-mode"]:checked').value;
+  const importMode = document.querySelector('.mode-option.active').dataset.mode;
   const cardNameSource = document.querySelector('input[name="card-name-source"]:checked').value;
   const deckName = document.getElementById('deck-name').value.trim() || 'Custom Deck';
   
@@ -1658,6 +1759,13 @@ function importQuizletDeck() {
     
     // Close popup
     closeQuizletImportPopup();
+    
+    // Hide subject selector immediately
+    const subjectDiv = document.getElementById('subject-selector');
+    if (subjectDiv) subjectDiv.style.display = 'none';
+    
+    // Load the deck and start the game
+    loadCustomDeck({ name: deckName, cards: cards });
     
     // Show success message
     showMessage(`Successfully imported ${cards.length} cards from "${deckName}"!`);

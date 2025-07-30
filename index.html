@@ -190,13 +190,18 @@
           <div class="mode-selector">
             <button class="mode-option active" data-mode="quizlet-order">List</button>
             <button class="mode-option" data-mode="quizlet-pairs">Quizlet</button>
-            <button class="mode-option" data-mode="auto-detect">Detect Dates</button>
           </div>
         </div>
         
-        <textarea id="quizlet-text" placeholder="Paste your list or Quizlet export text here..." rows="8"></textarea>
+        <textarea id="quizlet-text" placeholder="Paste your list here..." rows="8"></textarea>
         
         <div class="import-options">
+          
+          <div class="quizlet-sub-options" id="quizlet-sub-options" style="display: none;">
+            <label><strong>Date Handling:</strong></label>
+            <label><input type="radio" name="date-handling" value="order" checked> Use sequential order (1, 2, 3...)</label>
+            <label><input type="radio" name="date-handling" value="detect"> Auto-detect dates from text</label>
+          </div>
           
           <div class="order-options" id="order-options" style="display: none;">
             <label><strong>Card Name Source:</strong></label>

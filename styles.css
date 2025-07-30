@@ -1673,7 +1673,7 @@ body.dark-mode .attribution-link {
   margin-bottom: 1rem;
 }
 
-.import-mode, .order-options {
+.import-mode, .order-options, .quizlet-sub-options {
   margin-bottom: 1rem;
 }
 
@@ -1714,10 +1714,11 @@ body.dark-mode .attribution-link {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.order-options label {
+.order-options label, .quizlet-sub-options label {
   display: block;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
+  color: #374151;
 }
 
 #parse-button {
@@ -1912,6 +1913,16 @@ body.dark-mode .mode-option.active {
   background-color: #1f2937;
   color: #60a5fa;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark mode styles for quizlet sub options */
+body.dark-mode .quizlet-sub-options label {
+  color: #d1d5db;
+}
+
+/* Dark mode styles for order options */
+body.dark-mode .order-options label {
+  color: #d1d5db;
 }
 
 /* Mobile responsiveness for import button */
