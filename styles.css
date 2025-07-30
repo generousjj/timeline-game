@@ -1445,7 +1445,7 @@ body.dark-mode .custom-select:focus {
     border-bottom: 1px solid #e5e5e5;
     padding: 1rem 0.5rem;
     gap: 0.25rem;
-    margin-top: 0;
+    margin-top: 4rem; /* Account for logo section height */
     min-height: auto;
   }
   
