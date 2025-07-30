@@ -7,6 +7,26 @@ async function loadFlashcards(subject) {
 document.addEventListener("DOMContentLoaded", () => {
   const urlSearchParams = new URLSearchParams(window.location.search);
   const flashcardsParam = urlSearchParams.get("flashcards");
+  const darkParam = urlSearchParams.get("dark");
+
+  // Handle dark flag if present
+  if (darkParam) {
+    if (darkParam === 'enabled') {
+      saveTheme('dark');
+      document.body.classList.add('dark-mode');
+      isDarkMode = true;
+    } else if (darkParam === 'disabled') {
+      saveTheme('light');
+      document.body.classList.remove('dark-mode');
+      isDarkMode = false;
+    }
+    
+    // Remove the dark parameter from URL
+    urlSearchParams.delete('dark');
+    const newUrl = new URL(window.location);
+    newUrl.search = urlSearchParams.toString();
+    window.history.replaceState({}, '', newUrl);
+  }
 
   if (flashcardsParam) {
     // Reset all game state variables
