@@ -39,6 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (subjectSelector) subjectSelector.disabled = false;
     if (loadGameButton) loadGameButton.disabled = true;
     
+    // Remove game-loaded class when showing subject selector
+    removeGameLoadedClass();
+    
     // Hide game elements initially
     if (skipBtn) skipBtn.style.display = 'none';
     if (deck) deck.style.display = 'none';
@@ -380,6 +383,17 @@ function onMouseUp(e) {
       cardArea.removeChild(draggedCard);
       const newIndex = Array.from(cardContainer.children).indexOf(placeholder);
       cardContainer.insertBefore(draggedCard, newIndex === -1 ? null : cardContainer.children[newIndex]);
+
+      // Add scroll spacer if it doesn't exist (at the end)
+      let scrollSpacer = cardContainer.querySelector('.scroll-spacer');
+      if (!scrollSpacer) {
+        scrollSpacer = document.createElement('div');
+        scrollSpacer.className = 'scroll-spacer';
+        cardContainer.appendChild(scrollSpacer);
+      } else {
+        // Move existing spacer to the end
+        cardContainer.appendChild(scrollSpacer);
+      }
 
       draggedCard.style.position = '';
       draggedCard.style.left = '';
@@ -1045,8 +1059,17 @@ function goForward() {
   document.querySelector('.back-button').disabled = false;
 }
 
+function addGameLoadedClass() {
+  document.querySelector('.logo-section').classList.add('game-loaded');
+}
+
+function removeGameLoadedClass() {
+  document.querySelector('.logo-section').classList.remove('game-loaded');
+}
+
 function updateCreatorAttribution(flashcardSet) {
   const studyText = document.getElementById('study-text');
+  const mobileStudyText = document.getElementById('mobile-study-text');
   const creator = creatorMapping[flashcardSet];
   
   if (creator) {
@@ -1061,13 +1084,25 @@ function updateCreatorAttribution(flashcardSet) {
     };
     
     const subjectName = subjectNames[flashcardSet] || flashcardSet;
-    studyText.innerHTML = `Studying <strong>${subjectName}</strong> by ${creator}`;
+    const studyInfoHTML = `Studying <strong>${subjectName}</strong> by ${creator}`;
     
-    // Show the study info
-    document.getElementById('study-info').style.display = 'flex';
+    // Update both desktop and mobile study text
+    studyText.innerHTML = studyInfoHTML;
+    mobileStudyText.innerHTML = studyInfoHTML;
+    
+    // Show the appropriate study info based on screen size
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      document.getElementById('mobile-study-info').style.display = 'block';
+      document.getElementById('study-info').style.display = 'none';
+    } else {
+      document.getElementById('study-info').style.display = 'flex';
+      document.getElementById('mobile-study-info').style.display = 'none';
+    }
   } else {
     // Hide the study info if no creator found
     document.getElementById('study-info').style.display = 'none';
+    document.getElementById('mobile-study-info').style.display = 'none';
   }
 }
 
@@ -1148,14 +1183,19 @@ async function loadGame(flashcardSetName) {
   const params = new URLSearchParams(window.location.search);
   if (!params.has('flashcards')) {
     let stateObj = { id: "100" };
+    const separator = window.location.href.includes('?') ? '&' : '?';
     window.history.pushState(stateObj,
-        "Page", window.location.href+"&flashcards="+selectedSubject);
+        "Page", window.location.href+separator+"flashcards="+selectedSubject);
   }
 
   // Reset UI state
   const cardContainer = document.querySelector('.card-container');
   if (cardContainer) {
     cardContainer.innerHTML = '';
+    // Add scroll spacer
+    const scrollSpacer = document.createElement('div');
+    scrollSpacer.className = 'scroll-spacer';
+    cardContainer.appendChild(scrollSpacer);
   }
   
   // Reset placeholder
@@ -1194,6 +1234,9 @@ async function loadGame(flashcardSetName) {
 
     // Update creator attribution
     updateCreatorAttribution(flashcardSetName);
+    
+    // Add game-loaded class to logo section
+    addGameLoadedClass();
 
     // Remove shine animation from check results button
     const checkResultsButton = document.getElementById('check-results-button');
@@ -1238,8 +1281,9 @@ loadGameButton.addEventListener('click', async () => {
   const params = new URLSearchParams(window.location.search);
   if (!params.has('flashcards')) {
     let stateObj = { id: "100" };
+    const separator = window.location.href.includes('?') ? '&' : '?';
     window.history.pushState(stateObj,
-        "Page", window.location.href+"&flashcards="+selectedSubject);
+        "Page", window.location.href+separator+"flashcards="+selectedSubject);
   }
   
   if (newFlashcards) {
@@ -1272,6 +1316,9 @@ loadGameButton.addEventListener('click', async () => {
 
     // Update creator attribution
     updateCreatorAttribution(selectedSubject);
+    
+    // Add game-loaded class to logo section
+    addGameLoadedClass();
 
     // Remove shine animation from check results button
     const checkResultsButton = document.getElementById('check-results-button');
