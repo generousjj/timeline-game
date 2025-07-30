@@ -1583,4 +1583,32 @@ body.dark-mode .custom-select:focus {
     background-color: #3b82f6 !important;
     border-color: #3b82f6 !important;
   }
+  
+  /* Mobile attribution positioning */
+  .attribution-link {
+    right: 0.5rem;
+    bottom: 0.5rem;
+  }
+}
+
+/* Attribution link */
+.attribution-link {
+  position: fixed;
+  bottom: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  z-index: 1000;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  /* Align with theme button right edge */
+  right: 1rem;
+}
+
+.attribution-link:hover {
+  opacity: 1;
+}
+
+body.dark-mode .attribution-link {
+  color: #d1d5db; /* Lighter color for dark mode */
 } 
