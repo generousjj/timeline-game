@@ -965,11 +965,14 @@ document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
     const popupDiv = document.getElementById('popup');
     const instructionsPopup = document.getElementById('instructions-popup');
+    const quizletImportPopup = document.getElementById('quizlet-import-popup');
 
     if (!popupDiv.classList.contains('hidden')) {
       closePopup();
     } else if (!instructionsPopup.classList.contains('hidden')) {
       closeInstructionsPopup();
+    } else if (!quizletImportPopup.classList.contains('hidden')) {
+      closeQuizletImportPopup();
     }
   }
 });
@@ -979,6 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const popupDiv = document.getElementById('popup');
   const instructionsPopup = document.getElementById('instructions-popup');
   const confirmPopup = document.getElementById('confirm-popup');
+  const quizletImportPopup = document.getElementById('quizlet-import-popup');
 
   // Results popup
   popupDiv.addEventListener('click', function(event) {
@@ -1000,7 +1004,13 @@ document.addEventListener('DOMContentLoaded', function() {
       closeConfirmPopup();
     }
   });
-  
+
+  // Quizlet import popup
+  quizletImportPopup.addEventListener('click', function(event) {
+    if (event.target === quizletImportPopup) {
+      closeQuizletImportPopup();
+    }
+  });
 
 });
 
