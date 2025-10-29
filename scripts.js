@@ -662,6 +662,11 @@ function resumeGame() {
     deck.querySelector(".top-card").style.backgroundColor = '';
   }
   
+  // Also ensure any element with .top-card loses inline background
+  document.querySelectorAll('.top-card').forEach(el => {
+    el.style.backgroundColor = '';
+  });
+  
   // Update check results button
   updateCheckResultsButton();
 }

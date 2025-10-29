@@ -117,7 +117,7 @@ body {
 
 #load-game-button {
   padding: 0.75rem 2rem;
-  background-color: #3b82f6;
+  background-color: #7c3aed;
   color: white;
   border: none;
   border-radius: 8px;
@@ -129,7 +129,7 @@ body {
 }
 
 #load-game-button:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: #6d28d9;
   transform: translateY(-1px);
 }
 
@@ -457,7 +457,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background-color: #10b981;
+  background-color: #7c3aed;
   color: white;
   border: none;
   border-radius: 12px;
@@ -467,11 +467,11 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   z-index: 1002;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 
 .check-results-button:hover:not(:disabled) {
-  background-color: #059669;
+  background-color: #6d28d9;
   transform: translateY(-1px);
 }
 
@@ -874,7 +874,7 @@ body {
 
 .resume-button {
   padding: 0.5rem 0.75rem;
-  background-color: #10b981;
+  background-color: #8b5cf6;
   color: white;
   border: none;
   border-radius: 12px;
@@ -890,7 +890,7 @@ body {
 }
 
 .resume-button:hover {
-  background-color: #059669;
+  background-color: #7c3aed;
   transform: translateY(-1px);
 }
 
@@ -928,7 +928,7 @@ body {
 
 .continue-button {
   padding: 0.5rem 0.75rem;
-  background-color: #3b82f6;
+  background-color: #8b5cf6;
   color: white;
   border: none;
   border-radius: 12px;
@@ -941,7 +941,7 @@ body {
 }
 
 .continue-button:hover {
-  background-color: #2563eb;
+  background-color: #7c3aed;
   transform: translateY(-1px);
 }
 
@@ -1615,7 +1615,7 @@ body.dark-mode .attribution-link {
 
 /* Import Button */
 .import-button {
-  background-color: #16a34a;
+  background-color: #8b5cf6;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -1629,7 +1629,7 @@ body.dark-mode .attribution-link {
 }
 
 .import-button:hover {
-  background-color: #15803d;
+  background-color: #7c3aed;
 }
 
 .import-button:disabled {
@@ -1722,7 +1722,7 @@ body.dark-mode .attribution-link {
 }
 
 #parse-button {
-  background-color: #3b82f6;
+  background-color: #8b5cf6;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -1735,7 +1735,7 @@ body.dark-mode .attribution-link {
 }
 
 #parse-button:hover {
-  background-color: #2563eb;
+  background-color: #7c3aed;
 }
 
 #preview-section {
@@ -1813,14 +1813,14 @@ body.dark-mode .attribution-link {
 }
 
 .button-holder button:first-child {
-  background-color: #10b981;
+  background-color: #8b5cf6;
   color: white;
-  border: 1px solid #10b981;
+  border: 1px solid #8b5cf6;
 }
 
 .button-holder button:first-child:hover {
-  background-color: #059669;
-  border-color: #059669;
+  background-color: #7c3aed;
+  border-color: #7c3aed;
 }
 
 .button-holder button:last-child {
@@ -1885,13 +1885,13 @@ body.dark-mode .deck-name-input input:focus {
 
 /* Dark mode styles for import button */
 body.dark-mode .import-button {
-  background-color: #16a34a;
+  background-color: #8b5cf6;
   color: white;
   border: none;
 }
 
 body.dark-mode .import-button:hover {
-  background-color: #15803d;
+  background-color: #7c3aed;
 }
 
 body.dark-mode .import-button:disabled {
