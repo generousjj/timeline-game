@@ -1531,7 +1531,9 @@ body.dark-mode .custom-select:focus {
   }
   .restart-button { 
     top: 6.5rem; 
-    background-color: #f59e0b;
+    background-color: rgba(124, 58, 237, 0.12);
+    border-color: rgba(124, 58, 237, 0.3);
+    color: #7c3aed;
   }
   .back-button { 
     /* No fixed positioning needed since it's inside deck now */
