@@ -1160,7 +1160,7 @@ body.dark-mode .interface-button {
 
 body.dark-mode .interface-button:hover {
   background-color: rgba(55, 65, 81, 1);
-  border-color: #60a5fa;
+  border-color: #7c3aed;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -1183,6 +1183,17 @@ body.dark-mode .subject-toggle {
 body.dark-mode .subject-toggle:hover {
   background-color: #6d28d9 !important;
   border-color: #6d28d9 !important;
+}
+
+body.dark-mode .how-to {
+  background-color: rgba(124, 58, 237, 0.18) !important;
+  color: #c4b5fd !important;
+  border-color: rgba(139, 92, 246, 0.5) !important;
+}
+
+body.dark-mode .how-to:hover {
+  background-color: rgba(124, 58, 237, 0.26) !important;
+  border-color: rgba(139, 92, 246, 0.6) !important;
 }
 
 /* Theme icon switching */
