@@ -657,6 +657,11 @@ function resumeGame() {
     }
   });
   
+  // Remove gray background from current card in deck
+  if (deck.querySelector(".top-card")) {
+    deck.querySelector(".top-card").style.backgroundColor = '';
+  }
+  
   // Update check results button
   updateCheckResultsButton();
 }
